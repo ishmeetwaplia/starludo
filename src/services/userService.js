@@ -124,3 +124,32 @@ exports.addCredit = async (req) => {
     };
   }
 };
+
+exports.getCredit = async (req) => {
+  try {
+    const { _id } = req.auth;
+    const user = await User.findById(_id);
+
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found,
+      };
+    }
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Credit fetched successfully",
+      data: { credit: user.credit || 0 },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};
+

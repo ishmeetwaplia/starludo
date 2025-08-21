@@ -9,5 +9,6 @@ router.get("/profile", verifyToken, responseHandler(controller.profileController
 router.put("/profile", verifyToken, responseHandler(controller.updateProfileController));
 router.get("/logout", verifyToken, responseHandler(controller.logoutController));
 router.post("/credit", verifyToken, responseHandler(controller.addCreditController));
+router.get("/credit", verifyToken, responseHandler(controller.getCreditController));
 
 module.exports = router;

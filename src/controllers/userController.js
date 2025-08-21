@@ -48,3 +48,16 @@ exports.addCreditController = async (req) => {
     };
   }
 };
+
+exports.getCreditController = async (req) => {
+  try {
+    return await service.getCredit(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
