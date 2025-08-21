@@ -25,8 +25,7 @@ exports.createBet = async (req) => {
       };
     }
 
-    // Calculate winning amount (80% of 2 * betAmount)
-    const winningAmount = 0.8 * 2 * betAmount;
+    const winningAmount = Math.floor(0.8 * 2 * betAmount);
 
     const game = await Game.create({ createdBy: _id, betAmount, winningAmount });
 
@@ -67,5 +66,3 @@ exports.listGames = async (req) => {
     };
   }
 };
-
-
