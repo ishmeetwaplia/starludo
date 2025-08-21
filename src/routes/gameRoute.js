@@ -8,5 +8,6 @@ const controller = require("../controllers/gameController");
 const router = express.Router();
 
 router.post("/bet", verifyToken, validate(validation.createBet), responseHandler(controller.createBetController));
+router.get("/list", verifyToken, responseHandler(controller.listGamesController));
 
 module.exports = router;

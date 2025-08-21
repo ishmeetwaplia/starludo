@@ -28,6 +28,9 @@ exports.createBet = async (req) => {
     const game = await Game.create({ createdBy: _id, betAmount });
 
     global.io.emit("new_bet", game);
+    const games = await Game.find().populate("createdBy", "username credit");
+    global.io.emit("games_list", games);
+
 
     return {
       status: statusCode.OK,
@@ -43,4 +46,24 @@ exports.createBet = async (req) => {
     };
   }
 };
+
+exports.listGames = async (req) => {
+  try {
+    const games = await Game.find().populate("createdBy", "username credit");
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Games fetched successfully",
+      data: games
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
+
 
