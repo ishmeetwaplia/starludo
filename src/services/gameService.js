@@ -25,12 +25,14 @@ exports.createBet = async (req) => {
       };
     }
 
-    const game = await Game.create({ createdBy: _id, betAmount });
+    // Calculate winning amount (80% of 2 * betAmount)
+    const winningAmount = 0.8 * 2 * betAmount;
+
+    const game = await Game.create({ createdBy: _id, betAmount, winningAmount });
 
     global.io.emit("new_bet", game);
     const games = await Game.find().populate("createdBy", "username credit");
     global.io.emit("games_list", games);
-
 
     return {
       status: statusCode.OK,
