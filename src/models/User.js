@@ -61,6 +61,10 @@ const UserSchema = new mongoose.Schema({
   isRegistered: {
     type: Boolean,
     default: false
+  },
+   credit: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true, versionKey: false });
 

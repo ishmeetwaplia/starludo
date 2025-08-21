@@ -8,5 +8,6 @@ const router = express.Router();
 router.get("/profile", verifyToken, responseHandler(controller.profileController));
 router.put("/profile", verifyToken, responseHandler(controller.updateProfileController));
 router.get("/logout", verifyToken, responseHandler(controller.logoutController));
+router.post("/credit", verifyToken, responseHandler(controller.addCreditController));
 
 module.exports = router;

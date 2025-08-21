@@ -82,3 +82,45 @@ exports.updateProfile = async (req) => {
         };
     }
 }
+
+exports.addCredit = async (req) => {
+  try {
+    const { _id } = req.auth;
+    const { amount } = req.body;
+
+    // validate amount
+    if (!amount || amount < 10 || amount > 25000) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Credit amount must be between 10 and 25000"
+      };
+    }
+
+    const user = await User.findById(_id);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found
+      };
+    }
+
+    // Add credit
+    user.credit += amount;
+    await user.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Credit added successfully",
+      data: { credit: user.credit }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
