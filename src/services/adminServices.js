@@ -252,16 +252,16 @@ exports.updateUser = async (userId, userData) => {
       };
     }
 
-    // Fields that cannot be updated
-    const restrictedFields = [
-      "phone",
-      "otp",
-      "otpExpire",
-      "isRegistered"
+    const allowedFields = [
+      "fullName",
+      "username",
+      "profile",
+      "isBanned",
+      "isActive"
     ];
 
     for (const key of Object.keys(userData)) {
-      if (restrictedFields.includes(key)) {
+      if (!allowedFields.includes(key)) {
         continue;
       }
       user[key] = userData[key];
