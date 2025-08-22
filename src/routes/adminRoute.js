@@ -3,6 +3,7 @@ const adminController = require('../controllers/adminController');
 const { protect } = require('../middleware/authMiddleware');
 const { responseHandler } = require('../middleware/responseHandler');
 const validate = require('../middleware/validate');
+const upload = require('../middleware/upload');
 const {
   loginSchema,
   createUserSchema,
@@ -25,4 +26,6 @@ router.get("/users", protect, validate(getAllUsersSchema, "query"), responseHand
 router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler(adminController.banUnbanUser));
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
 router.get("/users-finance", protect, validate(getAllUsersFinance, "query"), responseHandler(adminController.getAllUsersFinance));
+router.post("/upload-scanners", protect, upload.array("scanners", 5), responseHandler(adminController.uploadScanners));
+
 module.exports = router;

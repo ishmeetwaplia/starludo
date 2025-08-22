@@ -11,7 +11,12 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
-  }
+  },
+  scannerImages: [
+    {
+      type: String 
+    }
+  ]
 });
 
 // Hash password before save

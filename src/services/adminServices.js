@@ -336,3 +336,46 @@ exports.getAllUsersFinance = async (query) => {
     };
   }
 };
+
+exports.uploadScannerImages = async (adminId, files) => {
+  try {
+    if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.ADMIN_NOT_FOUND
+      };
+    }
+
+    if (!files || files.length === 0) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "No images uploaded"
+      };
+    }
+
+    // Multer saves files with `.path`
+    const filePaths = files.map(file => file.path);
+
+    // Save in DB
+    admin.scannerImages = [...admin.scannerImages, ...filePaths];
+    await admin.save();
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Scanner images uploaded successfully",
+      data: admin.scannerImages
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};

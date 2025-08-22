@@ -45,3 +45,8 @@ exports.getAllUsersFinance = async (req) => {
   return result;
 };
 
+exports.uploadScanners = async (req) => {
+  const files = req.files;
+  const result = await adminService.uploadScannerImages(req.admin.id, files);
+  return result;
+};
