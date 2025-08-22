@@ -45,3 +45,8 @@ exports.uploadScanners = async (req) => {
   const result = await adminService.uploadScannerImages(req.admin.id, files);
   return result;
 };
+
+exports.getAllGames = async (req) => {
+  const result = await adminService.getAllGames(req.query);
+  return result;
+};

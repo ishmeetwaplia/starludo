@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 const User = require("../models/User");
+const Game = require("../models/Game");
 const { statusCode, resMessage } = require("../config/constant");
 
 exports.login = async ({ email, password }) => {
@@ -323,6 +324,64 @@ exports.uploadScannerImages = async (adminId, files) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message || resMessage.Server_error
+    };
+  }
+};
+
+exports.getAllGames = async (query) => {
+  try {
+    const {
+      status,
+      betAmountMin,
+      betAmountMax,
+      winningAmountMin,
+      winningAmountMax,
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const filter = {};
+
+    if (status) filter.status = status;
+
+    if (betAmountMin || betAmountMax) {
+      filter.betAmount = {};
+      if (betAmountMin) filter.betAmount.$gte = Number(betAmountMin);
+      if (betAmountMax) filter.betAmount.$lte = Number(betAmountMax);
+    }
+
+    if (winningAmountMin || winningAmountMax) {
+      filter.winningAmount = {};
+      if (winningAmountMin) filter.winningAmount.$gte = Number(winningAmountMin);
+      if (winningAmountMax) filter.winningAmount.$lte = Number(winningAmountMax);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const games = await Game.find(filter)
+      .populate("createdBy", "_id username")
+      .populate("acceptedBy", "_id username")
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Game.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Games fetched successfully",
+      data: {
+        games,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
     };
   }
 };

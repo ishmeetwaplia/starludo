@@ -29,10 +29,23 @@ const getAllUsersSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const getAllGamesSchema = Joi.object({
+  status: Joi.string()
+    .valid("pending", "accepted", "completed", "cancelled", "expired")
+    .optional(),
+  betAmountMin: Joi.number().min(0).optional(),
+  betAmountMax: Joi.number().min(0).optional(),
+  winningAmountMin: Joi.number().min(0).optional(),
+  winningAmountMax: Joi.number().min(0).optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
   updateUserSchema,
   banUserSchema,
   getAllUsersSchema,
+  getAllGamesSchema,
 };
