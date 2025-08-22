@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./src/config/db");
 const cors = require("cors");
 const http = require("http");
-const { Server } = require("socket.io");
+const initSocket = require("./socket");
 
 dotenv.config();
 connectDB();
@@ -19,13 +19,9 @@ app.use("/api/game", require("./src/routes/gameRoute"));
 app.use("/api/admin", require("./src/routes/adminRoute"));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = initSocket(server);
 
 global.io = io; 
-
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-});
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

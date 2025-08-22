@@ -6,7 +6,7 @@ exports.createBet = async (req) => {
   try {
     const { _id } = req.auth;
     const { betAmount } = req.body;
-    
+
     const user = await User.findById(_id);
 
     if (!user) {
@@ -28,10 +28,11 @@ exports.createBet = async (req) => {
     const winningAmount = Math.floor(0.8 * 2 * betAmount);
 
     const game = await Game.create({ createdBy: _id, betAmount, winningAmount });
-
     global.io.emit("new_bet", game);
-    const games = await Game.find().populate("createdBy", "username credit");
-    global.io.emit("games_list", games);
+
+    setTimeout(async () => {
+      await Game.findByIdAndUpdate(game._id, { status: "expired" });
+    }, 2 * 60 * 1000);
 
     return {
       status: statusCode.OK,

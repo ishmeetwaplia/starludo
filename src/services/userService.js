@@ -88,7 +88,6 @@ exports.addCredit = async (req) => {
     const { _id } = req.auth;
     const { amount } = req.body;
 
-    // validate amount
     if (!amount || amount < 10 || amount > 25000) {
       return {
         status: statusCode.BAD_REQUEST,
@@ -106,7 +105,6 @@ exports.addCredit = async (req) => {
       };
     }
 
-    // Add credit
     user.credit += amount;
     await user.save();
 
