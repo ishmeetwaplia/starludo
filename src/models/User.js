@@ -69,16 +69,6 @@ const UserSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   fullName: { type: String },         
-  dob: { type: Date },                
-  gender: { type: String },           
-  aadhaarNumber: { type: String },    
-  address: { type: String },        
-  email: { type: String },            
-  kycStatus: { 
-    type: String, 
-    enum: ["Pending", "Verified", "Rejected"], 
-    default: "Pending" 
-  } ,
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("User", UserSchema);

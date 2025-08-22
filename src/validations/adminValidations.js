@@ -11,14 +11,10 @@ const createUserSchema = Joi.object({
 
 const updateUserSchema = Joi.object({
   fullName: Joi.string().min(2).max(100).optional(),
-  dob: Joi.date().iso().optional(),
-  gender: Joi.string().valid("Male", "Female", "Other").optional(),
-  aadhaarNumber: Joi.string().pattern(/^\d{12}$/).optional(),
-  address: Joi.string().max(200).optional(),
-  email: Joi.string().email().optional(),
   isBanned: Joi.boolean().optional(),
   username: Joi.string().min(2).max(50).optional(),
-  isActive: Joi.boolean().optional()
+  isActive: Joi.boolean().optional(),
+  profile: Joi.string().optional()
 });
 
 const banUserSchema = Joi.object({

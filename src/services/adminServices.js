@@ -168,23 +168,19 @@ exports.getAllUsers = async (query) => {
       limit = 10
     } = query;
 
-    // Build filter object
     const filter = {};
 
     if (isActive !== undefined) filter.isActive = isActive === "true"; 
     if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
 
-    // Search by fullName, phone, email
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: "i" } },
         { username: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } }
+        { phone: { $regex: search, $options: "i" } }
       ];
     }
 
-    // Pagination
     const skip = (page - 1) * limit;
     const users = await User.find(filter)
       .skip(skip)
@@ -261,41 +257,13 @@ exports.updateUser = async (userId, userData) => {
       "phone",
       "otp",
       "otpExpire",
-      "isRegistered",
-      "kycStatus"
+      "isRegistered"
     ];
 
-    // Loop through received keys in request body
     for (const key of Object.keys(userData)) {
       if (restrictedFields.includes(key)) {
-        continue; // Skip restricted fields
+        continue;
       }
-
-      // Aadhaar-specific condition
-      if (key === "aadhaarNumber") {
-        if (user.kycStatus === "Verified") {
-          return {
-            success: false,
-            status: statusCode.FORBIDDEN,
-            message: "Aadhaar number cannot be updated after KYC is verified"
-          };
-        }
-
-        // Check if Aadhaar already exists for another user
-        const existing = await User.findOne({
-          aadhaarNumber: userData.aadhaarNumber,
-          _id: { $ne: userId }
-        });
-        if (existing) {
-          return {
-            success: false,
-            status: statusCode.CONFLICT,
-            message: "Aadhaar number already exists for another user"
-          };
-        }
-      }
-
-      // Apply update
       user[key] = userData[key];
     }
 
