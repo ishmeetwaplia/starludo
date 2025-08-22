@@ -178,6 +178,7 @@ exports.getAllUsers = async (query) => {
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } }
       ];
