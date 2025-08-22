@@ -12,7 +12,7 @@ function initSocket(server) {
     try {
       setInterval(async () => {
         try {
-          const updatedGames = await Game.find({ status: "pending" }).populate("createdBy", "username credit");
+          const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
           io.emit("games_list", updatedGames);
         } catch (error) {
           console.error("Error fetching games:", error);
@@ -25,6 +25,15 @@ function initSocket(server) {
     socket.on("delete_game", async (gameId) => {
       try {
         await Game.findByIdAndDelete(gameId);
+      } catch (error) {
+        console.error("Error deleting games:", error);
+      }
+    })
+
+    socket.on("accept_game_request", async (gameId) => {
+      try {
+        console.log("Accepting game:", gameId);
+        await Game.findByIdAndUpdate(gameId, { status: "requested" });
       } catch (error) {
         console.error("Error deleting games:", error);
       }
