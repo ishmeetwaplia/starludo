@@ -316,3 +316,55 @@ exports.updateUser = async (userId, userData) => {
   }
 };
 
+exports.getAllUsersFinance = async (query) => {
+  try {
+    if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
+
+    const {
+      isActive,
+      isBanned,
+      search,
+      page = 1,
+      limit = 10
+    } = query;
+
+    const filter = {};
+    if (isActive !== undefined) filter.isActive = isActive === "true"; 
+    if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
+
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const users = await User.find(filter)
+      .skip(skip)
+      .limit(Number(limit))
+      .select("fullName username phone cashWon referralEarning penalty winningAmount credit");
+
+    const total = await User.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: resMessage.USERS_FETCHED,
+      data: {
+        users,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit)
+      }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};

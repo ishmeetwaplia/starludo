@@ -40,3 +40,8 @@ exports.updateUser = async (req) => {
   return result;
 };
 
+exports.getAllUsersFinance = async (req) => {
+  const result = await adminService.getAllUsersFinance(req.query);
+  return result;
+};
+

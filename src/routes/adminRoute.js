@@ -9,6 +9,7 @@ const {
   updateUserSchema,
   banUserSchema,
   getAllUsersSchema,
+  getAllUsersFinance,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -23,5 +24,5 @@ router.get("/users/:id", protect, responseHandler(adminController.getUserById));
 router.get("/users", protect, validate(getAllUsersSchema, "query"), responseHandler(adminController.getAllUsers));
 router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler(adminController.banUnbanUser));
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
-
+router.get("/users-finance", protect, validate(getAllUsersFinance, "query"), responseHandler(adminController.getAllUsersFinance));
 module.exports = router;
