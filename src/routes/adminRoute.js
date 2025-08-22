@@ -10,7 +10,6 @@ const {
   updateUserSchema,
   banUserSchema,
   getAllUsersSchema,
-  getAllUsersFinance,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
