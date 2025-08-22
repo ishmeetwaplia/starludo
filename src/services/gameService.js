@@ -31,7 +31,7 @@ exports.createBet = async (req) => {
     global.io.emit("new_bet", game);
 
     setTimeout(async () => {
-      await Game.findByIdAndUpdate(game._id, { status: "expired" });
+      await Game.findOneAndUpdate({ _id: game._id, status: "pending" }, { status: "expired" });
     }, 2 * 60 * 1000);
 
     return {
