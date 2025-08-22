@@ -40,11 +40,6 @@ exports.updateUser = async (req) => {
   return result;
 };
 
-exports.getAllUsersFinance = async (req) => {
-  const result = await adminService.getAllUsersFinance(req.query);
-  return result;
-};
-
 exports.uploadScanners = async (req) => {
   const files = req.files;
   const result = await adminService.uploadScannerImages(req.admin.id, files);

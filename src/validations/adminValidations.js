@@ -29,19 +29,10 @@ const getAllUsersSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
-const getAllUsersFinance = Joi.object({
-  isActive: Joi.boolean().optional(),
-  isBanned: Joi.boolean().optional(),
-  search: Joi.string().optional(),
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-});
-
 module.exports = {
   loginSchema,
   createUserSchema,
   updateUserSchema,
   banUserSchema,
   getAllUsersSchema,
-  getAllUsersFinance,
 };
