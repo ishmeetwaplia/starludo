@@ -16,6 +16,7 @@ app.use("/api/auth", require("./src/routes/authRoute"));
 app.use("/api/user", require("./src/routes/userRoute"));
 app.use("/api/review", require("./src/routes/reviewRoute"));
 app.use("/api/game", require("./src/routes/gameRoute"));
+app.use("/api/admin", require("./src/routes/adminRoute"));
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });

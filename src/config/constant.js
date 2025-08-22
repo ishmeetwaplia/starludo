@@ -3,6 +3,7 @@ const statusCode = {
     OK: 200,
     INTERNAL_SERVER_ERROR: 500,
     NOT_FOUND: 404,
+    FORBIDDEN: 403,
     UNAUTHORIZED: 401,
     CREATED: 201,
 };
@@ -22,6 +23,21 @@ const resMessage = {
     Review_list_retrieved_successfully: "Review list retrieved successfully",
     No_reviews_found: "No reviews found",
     Review_stats_retrieved_successfully: "Review stats retrieved successfully",
+    INVALID_CREDENTIALS: "Invalid email or password",
+    LOGIN_SUCCESS: "Login successful",
+    ADMIN_NOT_FOUND: "Admin not found",
+    DASHBOARD_FETCHED: "Admin dashboard fetched",
+    USER_MODEL_NOT_INITIALIZED: "User model not initialized yet",
+    USER_EXISTS: "User already exists",
+    USER_CREATED: "User created successfully",
+    USER_NOT_FOUND: "User not found",
+    USER_DELETED: "User deleted successfully",
+    USER_UPDATED : "User updated successfully",
+    USER_BANNED : "User has been banned",
+    USER_UNBANNED : "User has been unbanned",
+    KYC_UPDATED : "KYC status updated successfully",
+    USER_FETCHED: "User fetched successfully",      
+    USERS_FETCHED: "All users fetched successfully"
 };
 
 module.exports = {
