@@ -9,6 +9,8 @@ const statusCode = {
 };
 
 const resMessage = {
+    USER_MODEL_NOT_INITIALIZED: "user database issue",
+    Server_error:"SERVER ERROR",
     OTP_SENT: "OTP sent successfully",
     User_not_found: "User not found",
     Invalid_or_expired_OTP: "Invalid or expired OTP",

@@ -10,12 +10,27 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
-  fullName: Joi.string().min(2).max(100).optional(),
-  isBanned: Joi.boolean().optional(),
+  phone: Joi.string().pattern(/^[6-9]\d{9}$/).optional(),
+  otp: Joi.string().optional(),
+  otpExpire: Joi.date().optional(),
+  token: Joi.string().optional(),
+  password: Joi.string().min(6).optional(),
+  profile: Joi.string().optional(),
   username: Joi.string().min(2).max(50).optional(),
+  referCode: Joi.string().optional(),
+  cashWon: Joi.string().optional(),
+  battlePlayed: Joi.string().optional(),
+  referralEarning: Joi.string().optional(),
+  penalty: Joi.string().optional(),
+  winningAmount: Joi.string().optional(),
+  completedGames: Joi.string().optional(),
+  referRank: Joi.string().optional(),
+  isRegistered: Joi.boolean().optional(),
+  credit: Joi.number().optional(),
+  isBanned: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),
-  profile: Joi.string().optional()
-});
+  fullName: Joi.string().min(2).max(100).optional()
+}).unknown(true);
 
 const banUserSchema = Joi.object({
   isBanned: Joi.boolean().required(),

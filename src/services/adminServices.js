@@ -253,18 +253,7 @@ exports.updateUser = async (userId, userData) => {
       };
     }
 
-    const allowedFields = [
-      "fullName",
-      "username",
-      "profile",
-      "isBanned",
-      "isActive"
-    ];
-
     for (const key of Object.keys(userData)) {
-      if (!allowedFields.includes(key)) {
-        continue;
-      }
       user[key] = userData[key];
     }
 
@@ -284,6 +273,7 @@ exports.updateUser = async (userId, userData) => {
     };
   }
 };
+
 
 exports.uploadScannerImages = async (adminId, files) => {
   try {
