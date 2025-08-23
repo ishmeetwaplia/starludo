@@ -13,14 +13,14 @@ function initSocket(server) {
 
     setInterval(async () => {
       try {
-        const games = await Game.find({ status: "pending" }).populate("createdBy", "username credit");
+        const games = await Game.find({}).populate("createdBy", "username credit");
 
         let hasExpired = false;
 
         for (const game of games) {
           const gameAge = Date.now() - new Date(game.createdAt).getTime();
 
-          if (gameAge > 2 * 60 * 1000) {
+          if (gameAge > 5 * 60 * 1000) {
             game.status = "expired";
             await game.save();
             hasExpired = true;
