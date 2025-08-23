@@ -286,13 +286,14 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       };
     }
 
-    if (!upiId) {
+    if (!upiId || typeof upiId !== "string") {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: "UPI ID is required"
+        message: "Valid UPI ID is required"
       };
     }
+
     const assetFilePath = path.join(__dirname, "../../asset.json");
 
     let assetData = { scanners: [] };
@@ -301,7 +302,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       try {
         assetData = JSON.parse(fileContent);
       } catch (e) {
-        assetData = { scanners: [] }; 
+        assetData = { scanners: [] };
       }
     }
 
@@ -309,9 +310,18 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       assetData.scanners = [];
     }
 
+    // 🔹 Set all scanners inactive
+    assetData.scanners = assetData.scanners.map(scanner => ({
+      image: scanner.image,
+      upiId: scanner.upiId,
+      isActive: false
+    }));
+
+    // 🔹 Add new scanner (clean object only)
     assetData.scanners.push({
       image: file.path,
-      upiId
+      upiId: String(upiId).trim(),
+      isActive: true
     });
 
     fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
@@ -320,7 +330,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       success: true,
       status: statusCode.OK,
       message: "Scanner uploaded successfully",
-      data: { image: file.path, upiId }
+      data: { image: file.path, upiId: String(upiId).trim(), isActive: true }
     };
   } catch (error) {
     return {
@@ -330,6 +340,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
     };
   }
 };
+
 
 
 exports.getAllGames = async (query) => {
