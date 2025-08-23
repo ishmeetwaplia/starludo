@@ -38,6 +38,33 @@ function initSocket(server) {
       }
     }, 1000);
 
+    setInterval(async () => {
+      try {
+        const games = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+
+        let hasExpired = false;
+
+        for (const game of games) {
+          const gameAge = Date.now() - new Date(game.createdAt).getTime();
+
+          if (gameAge > 15 * 60 * 1000) {
+            game.status = "completed";
+            await game.save();
+            hasExpired = true;
+          }
+        }
+
+        if (hasExpired) {
+          const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+
+          io.emit("live_games", updatedGames);
+        }
+
+      } catch (error) {
+        console.error("Error in live game expiration loop:", error);
+      }
+    }, 1000);
+
     socket.on("register_user", async (userId) => {
       console.log("Registering user:", userId);
       userSocketMap[userId] = socket.id;
@@ -125,6 +152,9 @@ function initSocket(server) {
 
         const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
         io.emit("games_list", updatedGames);
+
+        const liveGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+        io.emit("live_games", liveGames);
 
       } catch (error) {
         console.error("Error canceling game request:", error);
