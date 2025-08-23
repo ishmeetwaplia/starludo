@@ -13,7 +13,7 @@ function initSocket(server) {
 
     setInterval(async () => {
       try {
-        const games = await Game.find({}).populate("createdBy", "username credit");
+        const games = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
 
         let hasExpired = false;
 
@@ -37,6 +37,9 @@ function initSocket(server) {
         console.error("Error in game expiration loop:", error);
       }
     }, 1000);
+
+    const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+    io.emit("live_games", updatedGames);
 
     setInterval(async () => {
       try {
