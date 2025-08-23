@@ -28,8 +28,7 @@ function initSocket(server) {
         }
 
         if (hasExpired) {
-          const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } })
-            .populate("createdBy", "username credit");
+          const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
 
           io.emit("games_list", updatedGames);
         }
@@ -46,9 +45,6 @@ function initSocket(server) {
       const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
       io.emit("games_list", updatedGames);
     });
-
-    const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-    io.emit("games_list", updatedGames);
 
     socket.on("delete_game", async (gameId) => {
       try {
@@ -109,6 +105,31 @@ function initSocket(server) {
       }
     });
 
+    socket.on("start_game", async (gameId) => {
+      try {
+        const game = await Game.findById(gameId).populate("acceptedBy", "_id username");
+
+        if (!game || !game.acceptedBy) return;
+
+        const accepterId = game.acceptedBy._id.toString();
+        const accepterSocketId = userSocketMap[accepterId];
+
+        if (accepterSocketId) {
+          io.to(accepterSocketId).emit("start_game", {
+            gameId,
+            message: "The creator has started the game.",
+          });
+        }
+
+        await Game.findByIdAndUpdate(gameId, { status: "started" });
+
+        const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
+        io.emit("games_list", updatedGames);
+
+      } catch (error) {
+        console.error("Error canceling game request:", error);
+      }
+    });
 
     socket.on("disconnect", async () => {
       if (socket.userId) {

@@ -31,9 +31,7 @@ exports.createBet = async (req) => {
     global.io.emit("new_bet", game);
 
     const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-    if (updatedGames.length > 0) {
-      global.io.emit("games_list", updatedGames);
-    }
+    global.io.emit("games_list", updatedGames);
 
     return {
       status: statusCode.OK,
