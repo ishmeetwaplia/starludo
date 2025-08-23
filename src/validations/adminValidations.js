@@ -56,6 +56,10 @@ const getAllGamesSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const addCreditSchema = Joi.object({
+  credit: Joi.number().min(1).required() 
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -63,4 +67,5 @@ module.exports = {
   banUserSchema,
   getAllUsersSchema,
   getAllGamesSchema,
+  addCreditSchema,
 };

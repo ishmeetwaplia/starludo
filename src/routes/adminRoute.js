@@ -11,6 +11,7 @@ const {
   banUserSchema,
   getAllUsersSchema,
   getAllGamesSchema,
+  addCreditSchema,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.get("/users", protect, validate(getAllUsersSchema, "query"), responseHand
 router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler(adminController.banUnbanUser));
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
 router.post("/upload-scanners", protect, upload.array("scanners", 5), responseHandler(adminController.uploadScanners));
+router.put("/users/:id/credit", protect, validate(addCreditSchema), responseHandler(adminController.addCredit));
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));

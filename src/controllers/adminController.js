@@ -50,3 +50,8 @@ exports.getAllGames = async (req) => {
   const result = await adminService.getAllGames(req.query);
   return result;
 };
+
+exports.addCredit = async (req) => {
+  const result = await adminService.addCredit(req.params.id, req.body.credit);
+  return result;
+};

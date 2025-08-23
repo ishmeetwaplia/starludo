@@ -375,3 +375,36 @@ exports.getAllGames = async (query) => {
     };
   }
 };
+
+exports.addCredit = async (userId, creditToAdd) => {
+  try {
+    if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      };
+    }
+
+    // Add credit to the user’s account
+    user.credit = (user.credit || 0) + creditToAdd;
+
+    await user.save();
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Credit added successfully",
+      data: { userId: user._id, credit: user.credit }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};
