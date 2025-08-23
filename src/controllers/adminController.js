@@ -61,3 +61,16 @@ exports.getUserGameStats = async (req) => {
   const result = await adminService.getUserGameStats(req.params.id, req.query);
   return result;
 };
+
+exports.uploadAssets = async (req) => {
+  const banners = req.files["banners"] || [];
+  const tournaments = req.files["tournaments"] || [];
+
+  const result = await adminService.uploadAssetsService(
+    req.admin.id,
+    banners,
+    tournaments
+  );
+
+  return result;
+};

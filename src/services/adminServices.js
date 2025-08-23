@@ -498,3 +498,55 @@ exports.getUserGameStats = async (userId, query) => {
     };
   }
 };
+
+exports.uploadAssetsService = async (adminId, banners, tournaments) => {
+  try {
+    if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.ADMIN_NOT_FOUND,
+      };
+    }
+
+    // Save paths
+    const bannerPaths = banners.map((file) => file.path);
+    const tournamentPaths = tournaments.map((file) => file.path);
+
+    if (bannerPaths.length === 0 && tournamentPaths.length === 0) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "No images uploaded",
+      };
+    }
+
+    // Save in admin schema (you need array fields in schema)
+    if (!admin.banners) admin.banners = [];
+    if (!admin.tournaments) admin.tournaments = [];
+
+    admin.banners.push(...bannerPaths);
+    admin.tournaments.push(...tournamentPaths);
+
+    await admin.save();
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Assets uploaded successfully",
+      data: {
+        banners: admin.banners,
+        tournaments: admin.tournaments,
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};

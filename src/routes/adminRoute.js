@@ -20,6 +20,16 @@ const router = express.Router();
 router.post('/login', validate(loginSchema), responseHandler(adminController.loginAdmin));
 router.get('/dashboard', protect, responseHandler(adminController.getAdminDashboard));
 router.post("/upload-scanner", protect, upload.single("scanner"), responseHandler(adminController.uploadScanner));
+router.post(
+  "/upload-assets",
+  protect,
+  upload.fields([
+    { name: "banners", maxCount: 10 },        
+    { name: "tournaments", maxCount: 10 }    
+  ]),
+  responseHandler(adminController.uploadAssets)
+);
+
 
 // Admin -> manage users
 router.post("/users", protect, validate(createUserSchema), responseHandler(adminController.createUser));
