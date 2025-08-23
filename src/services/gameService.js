@@ -1,4 +1,4 @@
-const { statusCode } = require("../config/constant");
+const { statusCode, resMessage } = require("../config/constant");
 const Game = require("../models/Game");
 const User = require('../models/User');
 
@@ -63,6 +63,34 @@ exports.listGames = async (req) => {
       success: true,
       message: "Games fetched successfully",
       data: games
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+exports.room = async (req) => {
+  try {
+    const { roomId } = req.body;
+    const game = await Game.findOne({ _id: req.auth._id, status: "pending" }).populate("createdBy", "username credit");
+    if(!game){
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.No_pending_game_found_for_this_user
+      };
+    }
+
+    await Game.findByIdAndUpdate(game._id, { roomId });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Room_id_created_successfully,
     };
   } catch (error) {
     return {

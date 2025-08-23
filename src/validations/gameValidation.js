@@ -8,3 +8,17 @@ exports.createBet = Joi.object({
     "any.required": "Bet amount is required"
   })
 });
+
+exports.createRoom = Joi.object({
+  roomId: Joi.number()
+    .integer()
+    .min(10000000)
+    .max(99999999)
+    .required()
+    .messages({
+      "number.base": "Room ID must be a number",
+      "number.min": "Room ID must be exactly 8 digits",
+      "number.max": "Room ID must be exactly 8 digits",
+      "any.required": "Room ID is required"
+    })
+});

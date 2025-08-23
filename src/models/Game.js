@@ -24,6 +24,10 @@ const GameSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  roomId: {
+    type: Number,
+    default: null
+  }
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("Game", GameSchema);

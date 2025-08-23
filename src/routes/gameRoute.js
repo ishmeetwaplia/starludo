@@ -9,5 +9,6 @@ const router = express.Router();
 
 router.post("/bet", verifyToken, validate(validation.createBet), responseHandler(controller.createBetController));
 router.get("/list", verifyToken, responseHandler(controller.listGamesController));
+router.post('/room', verifyToken, validate(validation.createRoom), responseHandler(controller.roomController));
 
 module.exports = router;

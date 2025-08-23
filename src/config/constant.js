@@ -37,7 +37,9 @@ const resMessage = {
     USER_UNBANNED : "User has been unbanned",
     KYC_UPDATED : "KYC status updated successfully",
     USER_FETCHED: "User fetched successfully",      
-    USERS_FETCHED: "All users fetched successfully"
+    USERS_FETCHED: "All users fetched successfully",
+    No_pending_game_found_for_this_user: "No pending game found for this user",
+    Room_id_created_successfully: "Room id created successfully",
 };
 
 module.exports = {
