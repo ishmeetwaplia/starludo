@@ -13,7 +13,7 @@ const GameSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "requested", "started", "completed", "cancelled", "expired"],
+    enum: ["pending", "requested", "started", "completed", "cancelled", "expired", "quit"],
     default: "pending"
   },
   betAmount: {
@@ -24,6 +24,21 @@ const GameSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  winner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  loser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
+  quitBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  }
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("Game", GameSchema);

@@ -12,6 +12,7 @@ const {
   getAllUsersSchema,
   getAllGamesSchema,
   addCreditSchema,
+  getUserGameStatsQuerySchema,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -28,6 +29,7 @@ router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
 router.post("/upload-scanners", protect, upload.array("scanners", 5), responseHandler(adminController.uploadScanners));
 router.put("/users/:id/credit", protect, validate(addCreditSchema), responseHandler(adminController.addCredit));
+router.get("/users/:id/games", protect,  validate(getUserGameStatsQuerySchema, "query"), responseHandler(adminController.getUserGameStats));
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));

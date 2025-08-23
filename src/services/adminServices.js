@@ -408,3 +408,85 @@ exports.addCredit = async (userId, creditToAdd) => {
     };
   }
 };
+
+exports.getUserGameStats = async (userId, query) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      };
+    }
+
+    let { page = 1, limit = 10, type } = query;
+    page = Number(page);
+    limit = Number(limit);
+    const skip = (page - 1) * limit;
+
+    // Build filter based on type
+    let filter = {};
+    if (type === "created") {
+      filter.createdBy = userId;
+    } else if (type === "accepted") {
+      filter.acceptedBy = userId;
+    } else if (type === "won") {
+      filter.winner = userId;
+    } else if (type === "lost") {
+      filter.loser = userId;
+    } else if (type === "quit") {
+      filter.quitBy = userId;
+    } else if (type === "played") {
+      filter.$or = [{ createdBy: userId }, { acceptedBy: userId }];
+    }
+
+    // Fetch games with pagination
+    const games = await Game.find(filter)
+      .populate("createdBy", "_id username")
+      .populate("acceptedBy", "_id username")
+      .populate("winner", "_id username")
+      .populate("loser", "_id username")
+      .populate("quitBy", "_id username")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Game.countDocuments(filter);
+
+    // Pre-calculate all counts
+    const createdCount = await Game.countDocuments({ createdBy: userId });
+    const acceptedCount = await Game.countDocuments({ acceptedBy: userId });
+    const playedCount = await Game.countDocuments({ 
+      $or: [{ createdBy: userId }, { acceptedBy: userId }]
+    });
+    const wonCount = await Game.countDocuments({ winner: userId });
+    const lostCount = await Game.countDocuments({ loser: userId });
+    const quitCount = await Game.countDocuments({ quitBy: userId });
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User game stats fetched successfully",
+      data: {
+        userId,
+        createdCount,
+        acceptedCount,
+        playedCount,
+        wonCount,
+        lostCount,
+        quitCount,
+        games,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};

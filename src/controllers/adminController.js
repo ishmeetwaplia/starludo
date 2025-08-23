@@ -55,3 +55,8 @@ exports.addCredit = async (req) => {
   const result = await adminService.addCredit(req.params.id, req.body.credit);
   return result;
 };
+
+exports.getUserGameStats = async (req) => {
+  const result = await adminService.getUserGameStats(req.params.id, req.query);
+  return result;
+};
