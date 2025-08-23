@@ -11,6 +11,34 @@ function initSocket(server) {
   io.on("connection", async (socket) => {
     console.log("User connected:", socket.id);
 
+    setInterval(async () => {
+      try {
+        const games = await Game.find({ status: "pending" }).populate("createdBy", "username credit");
+
+        let hasExpired = false;
+
+        for (const game of games) {
+          const gameAge = Date.now() - new Date(game.createdAt).getTime();
+
+          if (gameAge > 2 * 60 * 1000) {
+            game.status = "expired";
+            await game.save();
+            hasExpired = true;
+          }
+        }
+
+        if (hasExpired) {
+          const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } })
+            .populate("createdBy", "username credit");
+
+          io.emit("games_list", updatedGames);
+        }
+
+      } catch (error) {
+        console.error("Error in game expiration loop:", error);
+      }
+    }, 1000);
+
     socket.on("register_user", async (userId) => {
       console.log("Registering user:", userId);
       userSocketMap[userId] = socket.id;
@@ -87,9 +115,8 @@ function initSocket(server) {
         delete userSocketMap[socket.userId];
       }
       const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-      if (updatedGames.length > 0) {
-        io.emit("games_list", updatedGames);
-      }
+      io.emit("games_list", updatedGames);
+
       console.log("User disconnected:", socket.id);
     });
   });
