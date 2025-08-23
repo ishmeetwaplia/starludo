@@ -6,10 +6,7 @@ exports.createBet = Joi.object({
     "number.min": "Bet must be at least 10 credits",
     "number.max": "Bet cannot exceed 25000 credits",
     "any.required": "Bet amount is required"
-  })
-});
-
-exports.createRoom = Joi.object({
+  }),
   roomId: Joi.number()
     .integer()
     .min(10000000)
