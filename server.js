@@ -17,6 +17,9 @@ app.use("/api/user", require("./src/routes/userRoute"));
 app.use("/api/review", require("./src/routes/reviewRoute"));
 app.use("/api/game", require("./src/routes/gameRoute"));
 app.use("/api/admin", require("./src/routes/adminRoute"));
+app.use("/uploads", express.static("uploads"));
+app.use("/api/assets", require("./src/routes/assetRoute"));
+
 
 const server = http.createServer(app);
 const io = initSocket(server);

@@ -40,13 +40,36 @@ exports.updateUser = async (req) => {
   return result;
 };
 
-exports.uploadScanners = async (req) => {
-  const files = req.files;
-  const result = await adminService.uploadScannerImages(req.admin.id, files);
+exports.uploadScanner = async (req) => {
+  const file = req.file;
+  const upiId = req.body.upiId; 
+  const result = await adminService.uploadScannerImage(req.admin.id, file, upiId);
   return result;
 };
 
 exports.getAllGames = async (req) => {
   const result = await adminService.getAllGames(req.query);
+  return result;
+};
+
+exports.addCredit = async (req) => {
+  const result = await adminService.addCredit(req.params.id, req.body.credit);
+  return result;
+};
+
+exports.getUserGameStats = async (req) => {
+  const result = await adminService.getUserGameStats(req.params.id, req.query);
+  return result;
+};
+
+exports.uploadAssets = async (req) => {
+  const banners = req.files["banners"] || [];
+  const tournaments = req.files["tournaments"] || [];
+
+  const result = await adminService.uploadAssetsService(
+    banners,
+    tournaments
+  );
+
   return result;
 };

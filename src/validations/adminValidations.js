@@ -10,12 +10,27 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
-  fullName: Joi.string().min(2).max(100).optional(),
-  isBanned: Joi.boolean().optional(),
+  // phone: Joi.string().pattern(/^[6-9]\d{9}$/).optional(),
+  // otp: Joi.string().optional(),
+  // otpExpire: Joi.date().optional(),
+  // token: Joi.string().optional(),
+  password: Joi.string().min(6).optional(),
+  profile: Joi.string().optional(),
   username: Joi.string().min(2).max(50).optional(),
+  referCode: Joi.string().optional(),
+  cashWon: Joi.string().optional(),
+  battlePlayed: Joi.string().optional(),
+  referralEarning: Joi.string().optional(),
+  penalty: Joi.string().optional(),
+  winningAmount: Joi.string().optional(),
+  completedGames: Joi.string().optional(),
+  referRank: Joi.string().optional(),
+  isRegistered: Joi.boolean().optional(),
+  credit: Joi.number().optional(),
+  isBanned: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),
-  profile: Joi.string().optional()
-});
+  fullName: Joi.string().min(2).max(100).optional()
+}).unknown(true);
 
 const banUserSchema = Joi.object({
   isBanned: Joi.boolean().required(),
@@ -41,6 +56,21 @@ const getAllGamesSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const addCreditSchema = Joi.object({
+  credit: Joi.number().min(1).required() 
+});
+
+const getUserGameStatsQuerySchema = Joi.object({
+  type: Joi.string().valid("created", "accepted", "won", "lost", "quit", "played").optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
+const updateScannerOrUpiSchema = Joi.object({
+  scannerUrl: Joi.string().uri().optional(),
+  upiId: Joi.string().pattern(/^[\w.-]+@[\w.-]+$/).optional(),
+}).or("scannerUrl", "upiId");
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -48,4 +78,7 @@ module.exports = {
   banUserSchema,
   getAllUsersSchema,
   getAllGamesSchema,
+  addCreditSchema,
+  getUserGameStatsQuerySchema,
+  updateScannerOrUpiSchema,
 };

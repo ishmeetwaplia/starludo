@@ -4,6 +4,8 @@ const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Game = require("../models/Game");
 const { statusCode, resMessage } = require("../config/constant");
+const fs = require("fs");
+const path = require("path");
 
 exports.login = async ({ email, password }) => {
   try {
@@ -253,18 +255,7 @@ exports.updateUser = async (userId, userData) => {
       };
     }
 
-    const allowedFields = [
-      "fullName",
-      "username",
-      "profile",
-      "isBanned",
-      "isActive"
-    ];
-
     for (const key of Object.keys(userData)) {
-      if (!allowedFields.includes(key)) {
-        continue;
-      }
       user[key] = userData[key];
     }
 
@@ -285,7 +276,7 @@ exports.updateUser = async (userId, userData) => {
   }
 };
 
-exports.uploadScannerImages = async (adminId, files) => {
+exports.uploadScannerImage = async (adminId, file, upiId) => {
   try {
     if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
 
@@ -298,26 +289,62 @@ exports.uploadScannerImages = async (adminId, files) => {
       };
     }
 
-    if (!files || files.length === 0) {
+    if (!file) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: "No images uploaded"
+        message: "No image uploaded"
       };
     }
 
-    // Multer saves files with `.path`
-    const filePaths = files.map(file => file.path);
+    if (!upiId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "UPI ID is required"
+      };
+    }
 
     // Save in DB
-    admin.scannerImages = [...admin.scannerImages, ...filePaths];
+    admin.scanner = {
+      image: file.path,
+      upiId
+    };
     await admin.save();
+
+    // === Minimal modification starts here ===
+    const assetFilePath = path.join(__dirname, "../../asset.json"); // root folder
+
+    let assetData = { scanners: [] };
+    if (fs.existsSync(assetFilePath)) {
+      const fileContent = fs.readFileSync(assetFilePath, "utf-8");
+      try {
+        assetData = JSON.parse(fileContent);
+      } catch (e) {
+        assetData = { scanners: [] }; // reset if corrupted
+      }
+    }
+
+    // Ensure scanners key exists
+    if (!Array.isArray(assetData.scanners)) {
+      assetData.scanners = [];
+    }
+
+    // Add new scanner record
+    assetData.scanners.push({
+      image: file.path,
+      upiId
+    });
+
+    // Write back to asset.json
+    fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
+    // === Minimal modification ends here ===
 
     return {
       success: true,
       status: statusCode.OK,
-      message: "Scanner images uploaded successfully",
-      data: admin.scannerImages
+      message: "Scanner uploaded successfully",
+      data: admin.scanner
     };
   } catch (error) {
     return {
@@ -375,6 +402,175 @@ exports.getAllGames = async (query) => {
         total,
         page: Number(page),
         pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.addCredit = async (userId, creditToAdd) => {
+  try {
+    if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      };
+    }
+
+    // Add credit to the user’s account
+    user.credit = (user.credit || 0) + creditToAdd;
+
+    await user.save();
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Credit added successfully",
+      data: { userId: user._id, credit: user.credit }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};
+
+exports.getUserGameStats = async (userId, query) => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      };
+    }
+
+    let { page = 1, limit = 10, type } = query;
+    page = Number(page);
+    limit = Number(limit);
+    const skip = (page - 1) * limit;
+
+    // Build filter based on type
+    let filter = {};
+    if (type === "created") {
+      filter.createdBy = userId;
+    } else if (type === "accepted") {
+      filter.acceptedBy = userId;
+    } else if (type === "won") {
+      filter.winner = userId;
+    } else if (type === "lost") {
+      filter.loser = userId;
+    } else if (type === "quit") {
+      filter.quitBy = userId;
+    } else if (type === "played") {
+      filter.$or = [{ createdBy: userId }, { acceptedBy: userId }];
+    }
+
+    // Fetch games with pagination
+    const games = await Game.find(filter)
+      .populate("createdBy", "_id username")
+      .populate("acceptedBy", "_id username")
+      .populate("winner", "_id username")
+      .populate("loser", "_id username")
+      .populate("quitBy", "_id username")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Game.countDocuments(filter);
+
+    // Pre-calculate all counts
+    const createdCount = await Game.countDocuments({ createdBy: userId });
+    const acceptedCount = await Game.countDocuments({ acceptedBy: userId });
+    const playedCount = await Game.countDocuments({ 
+      $or: [{ createdBy: userId }, { acceptedBy: userId }]
+    });
+    const wonCount = await Game.countDocuments({ winner: userId });
+    const lostCount = await Game.countDocuments({ loser: userId });
+    const quitCount = await Game.countDocuments({ quitBy: userId });
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User game stats fetched successfully",
+      data: {
+        userId,
+        createdCount,
+        acceptedCount,
+        playedCount,
+        wonCount,
+        lostCount,
+        quitCount,
+        games,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};
+
+exports.uploadAssetsService = async (banners, tournaments) => {
+  try {
+    const bannerPaths = banners.map((file) => file.path);
+    const tournamentPaths = tournaments.map((file) => file.path);
+
+    if (bannerPaths.length === 0 && tournamentPaths.length === 0) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "No images uploaded",
+      };
+    }
+
+    // === Handle asset.json ===
+    const assetFilePath = path.join(__dirname, "../../asset.json");
+
+    let assetData = { banners: [], tournaments: [] };
+    if (fs.existsSync(assetFilePath)) {
+      const fileContent = fs.readFileSync(assetFilePath, "utf-8");
+      try {
+        assetData = JSON.parse(fileContent);
+      } catch (e) {
+        assetData = { banners: [], tournaments: [] }; // reset if corrupted
+      }
+    }
+
+    if (!Array.isArray(assetData.banners)) assetData.banners = [];
+    if (!Array.isArray(assetData.tournaments)) assetData.tournaments = [];
+
+    // Append new paths
+    assetData.banners.push(...bannerPaths);
+    assetData.tournaments.push(...tournamentPaths);
+
+    // Save updated asset.json
+    fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Assets uploaded successfully",
+      data: {
+        banners: bannerPaths,
+        tournaments: tournamentPaths,
       },
     };
   } catch (error) {

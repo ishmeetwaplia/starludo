@@ -11,12 +11,25 @@ const {
   banUserSchema,
   getAllUsersSchema,
   getAllGamesSchema,
+  addCreditSchema,
+  getUserGameStatsQuerySchema,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
 
 router.post('/login', validate(loginSchema), responseHandler(adminController.loginAdmin));
 router.get('/dashboard', protect, responseHandler(adminController.getAdminDashboard));
+router.post("/upload-scanner", protect, upload.single("scanner"), responseHandler(adminController.uploadScanner));
+router.post(
+  "/upload-assets",
+  protect,
+  upload.fields([
+    { name: "banners", maxCount: 10 },        
+    { name: "tournaments", maxCount: 10 }    
+  ]),
+  responseHandler(adminController.uploadAssets)
+);
+
 
 // Admin -> manage users
 router.post("/users", protect, validate(createUserSchema), responseHandler(adminController.createUser));
@@ -25,7 +38,8 @@ router.get("/users/:id", protect, responseHandler(adminController.getUserById));
 router.get("/users", protect, validate(getAllUsersSchema, "query"), responseHandler(adminController.getAllUsers));
 router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler(adminController.banUnbanUser));
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
-router.post("/upload-scanners", protect, upload.array("scanners", 5), responseHandler(adminController.uploadScanners));
+router.put("/users/:id/credit", protect, validate(addCreditSchema), responseHandler(adminController.addCredit));
+router.get("/users/:id/games", protect,  validate(getUserGameStatsQuerySchema, "query"), responseHandler(adminController.getUserGameStats));
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));
