@@ -38,7 +38,7 @@ function initSocket(server) {
       }
     }, 1000);
 
-    const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+    const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
     io.emit("live_games", updatedGames);
 
     setInterval(async () => {
@@ -58,8 +58,7 @@ function initSocket(server) {
         }
 
         if (hasExpired) {
-          const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
-
+          const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
           io.emit("live_games", updatedGames);
         }
 
@@ -157,7 +156,7 @@ function initSocket(server) {
         const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
         io.emit("games_list", updatedGames);
 
-        const liveGames = await Game.find({ status: "started" }).populate("createdBy", "username credit");
+        const liveGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
         io.emit("live_games", liveGames);
 
       } catch (error) {
