@@ -529,25 +529,37 @@ exports.uploadAssetsService = async (banners, tournaments) => {
       };
     }
 
-    // === Handle asset.json ===
     const assetFilePath = path.join(__dirname, "../../asset.json");
 
-    let assetData = { banners: [], tournaments: [] };
+    let assetData = { scanners: [], banners: [], tournaments: [] };
     if (fs.existsSync(assetFilePath)) {
       const fileContent = fs.readFileSync(assetFilePath, "utf-8");
       try {
         assetData = JSON.parse(fileContent);
       } catch (e) {
-        assetData = { banners: [], tournaments: [] }; // reset if corrupted
+        assetData = { scanners: [], banners: [], tournaments: [] };
       }
     }
 
+    if (!Array.isArray(assetData.scanners)) assetData.scanners = [];
     if (!Array.isArray(assetData.banners)) assetData.banners = [];
     if (!Array.isArray(assetData.tournaments)) assetData.tournaments = [];
 
-    // Append new paths
-    assetData.banners.push(...bannerPaths);
-    assetData.tournaments.push(...tournamentPaths);
+    // 🔹 Add banners as objects with isActive = true
+    const newBanners = bannerPaths.map((imagePath) => ({
+      image: imagePath,
+      isActive: true,
+    }));
+
+    // 🔹 Add tournaments as objects with isActive = true
+    const newTournaments = tournamentPaths.map((imagePath) => ({
+      image: imagePath,
+      isActive: true,
+    }));
+
+    // Append new assets
+    assetData.banners.push(...newBanners);
+    assetData.tournaments.push(...newTournaments);
 
     // Save updated asset.json
     fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
@@ -557,8 +569,8 @@ exports.uploadAssetsService = async (banners, tournaments) => {
       status: statusCode.OK,
       message: "Assets uploaded successfully",
       data: {
-        banners: bannerPaths,
-        tournaments: tournamentPaths,
+        banners: newBanners,
+        tournaments: newTournaments,
       },
     };
   } catch (error) {
@@ -569,3 +581,4 @@ exports.uploadAssetsService = async (banners, tournaments) => {
     };
   }
 };
+
