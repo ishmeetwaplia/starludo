@@ -67,7 +67,6 @@ exports.uploadAssets = async (req) => {
   const tournaments = req.files["tournaments"] || [];
 
   const result = await adminService.uploadAssetsService(
-    req.admin.id,
     banners,
     tournaments
   );

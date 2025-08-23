@@ -4,6 +4,8 @@ const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Game = require("../models/Game");
 const { statusCode, resMessage } = require("../config/constant");
+const fs = require("fs");
+const path = require("path");
 
 exports.login = async ({ email, password }) => {
   try {
@@ -274,7 +276,6 @@ exports.updateUser = async (userId, userData) => {
   }
 };
 
-
 exports.uploadScannerImage = async (adminId, file, upiId) => {
   try {
     if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
@@ -304,12 +305,40 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       };
     }
 
+    // Save in DB
     admin.scanner = {
       image: file.path,
       upiId
     };
-
     await admin.save();
+
+    // === Minimal modification starts here ===
+    const assetFilePath = path.join(__dirname, "../../asset.json"); // root folder
+
+    let assetData = { scanners: [] };
+    if (fs.existsSync(assetFilePath)) {
+      const fileContent = fs.readFileSync(assetFilePath, "utf-8");
+      try {
+        assetData = JSON.parse(fileContent);
+      } catch (e) {
+        assetData = { scanners: [] }; // reset if corrupted
+      }
+    }
+
+    // Ensure scanners key exists
+    if (!Array.isArray(assetData.scanners)) {
+      assetData.scanners = [];
+    }
+
+    // Add new scanner record
+    assetData.scanners.push({
+      image: file.path,
+      upiId
+    });
+
+    // Write back to asset.json
+    fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
+    // === Minimal modification ends here ===
 
     return {
       success: true,
@@ -499,20 +528,8 @@ exports.getUserGameStats = async (userId, query) => {
   }
 };
 
-exports.uploadAssetsService = async (adminId, banners, tournaments) => {
+exports.uploadAssetsService = async (banners, tournaments) => {
   try {
-    if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
-
-    const admin = await Admin.findById(adminId);
-    if (!admin) {
-      return {
-        status: statusCode.NOT_FOUND,
-        success: false,
-        message: resMessage.ADMIN_NOT_FOUND,
-      };
-    }
-
-    // Save paths
     const bannerPaths = banners.map((file) => file.path);
     const tournamentPaths = tournaments.map((file) => file.path);
 
@@ -524,22 +541,36 @@ exports.uploadAssetsService = async (adminId, banners, tournaments) => {
       };
     }
 
-    // Save in admin schema (you need array fields in schema)
-    if (!admin.banners) admin.banners = [];
-    if (!admin.tournaments) admin.tournaments = [];
+    // === Handle asset.json ===
+    const assetFilePath = path.join(__dirname, "../../asset.json");
 
-    admin.banners.push(...bannerPaths);
-    admin.tournaments.push(...tournamentPaths);
+    let assetData = { banners: [], tournaments: [] };
+    if (fs.existsSync(assetFilePath)) {
+      const fileContent = fs.readFileSync(assetFilePath, "utf-8");
+      try {
+        assetData = JSON.parse(fileContent);
+      } catch (e) {
+        assetData = { banners: [], tournaments: [] }; // reset if corrupted
+      }
+    }
 
-    await admin.save();
+    if (!Array.isArray(assetData.banners)) assetData.banners = [];
+    if (!Array.isArray(assetData.tournaments)) assetData.tournaments = [];
+
+    // Append new paths
+    assetData.banners.push(...bannerPaths);
+    assetData.tournaments.push(...tournamentPaths);
+
+    // Save updated asset.json
+    fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
 
     return {
       success: true,
       status: statusCode.OK,
       message: "Assets uploaded successfully",
       data: {
-        banners: admin.banners,
-        tournaments: admin.tournaments,
+        banners: bannerPaths,
+        tournaments: tournamentPaths,
       },
     };
   } catch (error) {
