@@ -278,17 +278,6 @@ exports.updateUser = async (userId, userData) => {
 
 exports.uploadScannerImage = async (adminId, file, upiId) => {
   try {
-    if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
-
-    const admin = await Admin.findById(adminId);
-    if (!admin) {
-      return {
-        status: statusCode.NOT_FOUND,
-        success: false,
-        message: resMessage.ADMIN_NOT_FOUND
-      };
-    }
-
     if (!file) {
       return {
         status: statusCode.BAD_REQUEST,
@@ -304,16 +293,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
         message: "UPI ID is required"
       };
     }
-
-    // Save in DB
-    admin.scanner = {
-      image: file.path,
-      upiId
-    };
-    await admin.save();
-
-    // === Minimal modification starts here ===
-    const assetFilePath = path.join(__dirname, "../../asset.json"); // root folder
+    const assetFilePath = path.join(__dirname, "../../asset.json");
 
     let assetData = { scanners: [] };
     if (fs.existsSync(assetFilePath)) {
@@ -321,30 +301,26 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       try {
         assetData = JSON.parse(fileContent);
       } catch (e) {
-        assetData = { scanners: [] }; // reset if corrupted
+        assetData = { scanners: [] }; 
       }
     }
 
-    // Ensure scanners key exists
     if (!Array.isArray(assetData.scanners)) {
       assetData.scanners = [];
     }
 
-    // Add new scanner record
     assetData.scanners.push({
       image: file.path,
       upiId
     });
 
-    // Write back to asset.json
     fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
-    // === Minimal modification ends here ===
 
     return {
       success: true,
       status: statusCode.OK,
       message: "Scanner uploaded successfully",
-      data: admin.scanner
+      data: { image: file.path, upiId }
     };
   } catch (error) {
     return {
@@ -354,6 +330,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
     };
   }
 };
+
 
 exports.getAllGames = async (query) => {
   try {
