@@ -144,6 +144,7 @@ function initSocket(server) {
         if (accepterSocketId) {
           io.to(accepterSocketId).emit("start_game", {
             gameId,
+            roomId: game.roomId,
             message: "The creator has started the game.",
           });
         }
