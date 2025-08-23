@@ -40,9 +40,10 @@ exports.updateUser = async (req) => {
   return result;
 };
 
-exports.uploadScanners = async (req) => {
-  const files = req.files;
-  const result = await adminService.uploadScannerImages(req.admin.id, files);
+exports.uploadScanner = async (req) => {
+  const file = req.file;
+  const upiId = req.body.upiId; 
+  const result = await adminService.uploadScannerImage(req.admin.id, file, upiId);
   return result;
 };
 

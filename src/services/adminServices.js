@@ -275,7 +275,7 @@ exports.updateUser = async (userId, userData) => {
 };
 
 
-exports.uploadScannerImages = async (adminId, files) => {
+exports.uploadScannerImage = async (adminId, file, upiId) => {
   try {
     if (!Admin) throw new Error(resMessage.ADMIN_MODEL_NOT_INITIALIZED);
 
@@ -288,26 +288,34 @@ exports.uploadScannerImages = async (adminId, files) => {
       };
     }
 
-    if (!files || files.length === 0) {
+    if (!file) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: "No images uploaded"
+        message: "No image uploaded"
       };
     }
 
-    // Multer saves files with `.path`
-    const filePaths = files.map(file => file.path);
+    if (!upiId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "UPI ID is required"
+      };
+    }
 
-    // Save in DB
-    admin.scannerImages = [...admin.scannerImages, ...filePaths];
+    admin.scanner = {
+      image: file.path,
+      upiId
+    };
+
     await admin.save();
 
     return {
       success: true,
       status: statusCode.OK,
-      message: "Scanner images uploaded successfully",
-      data: admin.scannerImages
+      message: "Scanner uploaded successfully",
+      data: admin.scanner
     };
   } catch (error) {
     return {
