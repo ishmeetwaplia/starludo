@@ -1,41 +1,48 @@
 {
   "scanners": [
     {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/scanners/1755948012762-Image_result_for_insights_into_action.jpeg",
-      "upiId": "asdfghj",
+      "image": "/uploads/scanners/1756099100831-number-1098377_1280.png",
+      "upiId": "yyyyyyy",
       "isActive": false
     },
     {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/scanners/1756095932728-Image_result_for_insights_into_action.jpeg",
-      "upiId": "12345678",
-      "isActive": true
-    }
-  ],
-  "banners": [
-    {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1756095845876-Screenshot_2025-08-12_at_12.46.30_PM_(1).png",
+      "image": "/uploads/scanners/1756099121924-water-2748670_1280.png",
+      "upiId": "ssss",
       "isActive": false
     },
     {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1756097420529-Image_result_for_insights_into_action.jpeg",
-      "isActive": true
-    },
-    {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1756097420530-Image_result_for_insights_into_action.jpeg",
-      "isActive": true
-    }
-  ],
-  "tournaments": [
-    {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1756095845894-Screenshot_2025-08-12_at_12.46.30_PM.png",
+      "image": "/uploads/scanners/1756099392976-sharad-bhat-HLuNTyUQG_I-unsplash.jpg",
+      "upiId": "sssss",
       "isActive": false
     },
     {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1756097420531-Image_result_for_insights_into_action.jpeg",
-      "isActive": true
+      "image": "/uploads/scanners/1756099401806-sharad-bhat-HLuNTyUQG_I-unsplash.jpg",
+      "upiId": "sssss",
+      "isActive": false
     },
     {
-      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1756097420531-Image_result_for_insights_into_action.jpeg",
+      "image": "/uploads/scanners/1756099428822-karsten-winegeart-VYlycxMAaeg-unsplash.jpg",
+      "upiId": "yuuuuuuu",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756099468584-sharad-bhat-HLuNTyUQG_I-unsplash.jpg",
+      "upiId": "yogesh",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756099541912-Image_result_for_insights_into_action.jpeg",
+      "upiId": "1234567890",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756099556766-Image_result_for_insights_into_action.jpeg",
+      "upiId": "1234567890",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756099567838-dave-goudreau-zZvtj8EpE0s-unsplash.jpg",
+      "upiId": "pppppp",
       "isActive": true
     }
   ]

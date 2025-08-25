@@ -317,9 +317,10 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       isActive: false
     }));
 
-    // 🔹 Add new scanner (clean object only)
+    const relativePath = `/uploads/scanners/${file.filename}`;
+
     assetData.scanners.push({
-      image: file.path,
+      image: relativePath,
       upiId: String(upiId).trim(),
       isActive: true
     });
@@ -330,7 +331,7 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
       success: true,
       status: statusCode.OK,
       message: "Scanner uploaded successfully",
-      data: { image: file.path, upiId: String(upiId).trim(), isActive: true }
+      data: { image: relativePath, upiId: String(upiId).trim(), isActive: true }
     };
   } catch (error) {
     return {
@@ -340,8 +341,6 @@ exports.uploadScannerImage = async (adminId, file, upiId) => {
     };
   }
 };
-
-
 
 exports.getAllGames = async (query) => {
   try {
@@ -518,10 +517,7 @@ exports.getUserGameStats = async (userId, query) => {
 
 exports.uploadAssetsService = async (banners, tournaments) => {
   try {
-    const bannerPaths = banners.map((file) => file.path);
-    const tournamentPaths = tournaments.map((file) => file.path);
-
-    if (bannerPaths.length === 0 && tournamentPaths.length === 0) {
+    if ((!banners || banners.length === 0) && (!tournaments || tournaments.length === 0)) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -545,19 +541,22 @@ exports.uploadAssetsService = async (banners, tournaments) => {
     if (!Array.isArray(assetData.banners)) assetData.banners = [];
     if (!Array.isArray(assetData.tournaments)) assetData.tournaments = [];
 
+    // 🔹 Deactivate old ones
     assetData.banners = assetData.banners.map((b) => ({ ...b, isActive: false }));
     assetData.tournaments = assetData.tournaments.map((t) => ({ ...t, isActive: false }));
 
-    const newBanners = bannerPaths.map((imagePath) => ({
-      image: imagePath,
+    // 🔹 Build relative paths
+    const newBanners = (banners || []).map((file) => ({
+      image: `/uploads/banner/${file.filename}`,
       isActive: true,
     }));
 
-    const newTournaments = tournamentPaths.map((imagePath) => ({
-      image: imagePath,
+    const newTournaments = (tournaments || []).map((file) => ({
+      image: `/uploads/tournaments/${file.filename}`,
       isActive: true,
     }));
 
+    // 🔹 Push new data
     assetData.banners.push(...newBanners);
     assetData.tournaments.push(...newTournaments);
 
