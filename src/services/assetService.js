@@ -20,17 +20,24 @@ exports.getAssetsService = async () => {
     try {
       assetData = JSON.parse(fileContent);
     } catch (e) {
-      assetData = { banners: [], tournaments: [] }; // reset if corrupted
+      assetData = { banners: [], tournaments: [] };
     }
+
+    const banners = (assetData.banners || []).map((b) => ({
+      ...b,
+      isActive: typeof b.isActive === "boolean" ? b.isActive : false,
+    }));
+
+    const tournaments = (assetData.tournaments || []).map((t) => ({
+      ...t,
+      isActive: typeof t.isActive === "boolean" ? t.isActive : false,
+    }));
 
     return {
       success: true,
       status: 200,
       message: "Assets fetched successfully",
-      data: {
-        banners: assetData.banners || [],
-        tournaments: assetData.tournaments || [],
-      },
+      data: { banners, tournaments },
     };
   } catch (error) {
     return {
@@ -60,14 +67,19 @@ exports.getScannersService = async () => {
     try {
       assetData = JSON.parse(fileContent);
     } catch (e) {
-      assetData = { scanners: [] }; 
+      assetData = { scanners: [] };
     }
+
+    const scanners = (assetData.scanners || []).map((s) => ({
+      ...s,
+      isActive: typeof s.isActive === "boolean" ? s.isActive : false,
+    }));
 
     return {
       success: true,
       status: 200,
       message: "Scanners fetched successfully",
-      data: assetData.scanners || [],
+      data: scanners,
     };
   } catch (error) {
     return {
@@ -77,4 +89,3 @@ exports.getScannersService = async () => {
     };
   }
 };
-

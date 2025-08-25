@@ -2,15 +2,25 @@
   "scanners": [
     {
       "image": "/Users/apple/Desktop/Waplia/starludo/uploads/scanners/1755948012762-Image_result_for_insights_into_action.jpeg",
-      "upiId": "asdfghj"
+      "upiId": "asdfghj",
+      "isActive": false
+    },
+    {
+      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/scanners/1756095932728-Image_result_for_insights_into_action.jpeg",
+      "upiId": "12345678",
+      "isActive": true
     }
   ],
   "banners": [
-    "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1755948623693-Screenshot_2025-08-12_at_12.46.30_PM_(1).png",
-    "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1755948700398-Screenshot_2025-08-12_at_12.46.30_PM_(1).png"
+    {
+      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/banner/1756095845876-Screenshot_2025-08-12_at_12.46.30_PM_(1).png",
+      "isActive": true
+    }
   ],
   "tournaments": [
-    "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1755948623697-Screenshot_2025-08-12_at_12.46.30_PM.png",
-    "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1755948700402-Screenshot_2025-08-12_at_12.46.30_PM.png"
+    {
+      "image": "/Users/apple/Desktop/Waplia/starludo/uploads/tournaments/1756095845894-Screenshot_2025-08-12_at_12.46.30_PM.png",
+      "isActive": true
+    }
   ]
 }
