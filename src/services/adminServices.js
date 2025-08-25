@@ -545,23 +545,22 @@ exports.uploadAssetsService = async (banners, tournaments) => {
     if (!Array.isArray(assetData.banners)) assetData.banners = [];
     if (!Array.isArray(assetData.tournaments)) assetData.tournaments = [];
 
-    // 🔹 Add banners as objects with isActive = true
+    assetData.banners = assetData.banners.map((b) => ({ ...b, isActive: false }));
+    assetData.tournaments = assetData.tournaments.map((t) => ({ ...t, isActive: false }));
+
     const newBanners = bannerPaths.map((imagePath) => ({
       image: imagePath,
       isActive: true,
     }));
 
-    // 🔹 Add tournaments as objects with isActive = true
     const newTournaments = tournamentPaths.map((imagePath) => ({
       image: imagePath,
       isActive: true,
     }));
 
-    // Append new assets
     assetData.banners.push(...newBanners);
     assetData.tournaments.push(...newTournaments);
 
-    // Save updated asset.json
     fs.writeFileSync(assetFilePath, JSON.stringify(assetData, null, 2));
 
     return {
@@ -581,4 +580,3 @@ exports.uploadAssetsService = async (banners, tournaments) => {
     };
   }
 };
-
