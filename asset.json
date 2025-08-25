@@ -45,5 +45,29 @@
       "upiId": "pppppp",
       "isActive": true
     }
+  ],
+  "banners": [
+    {
+      "image": "/uploads/banner/1756100481012-Screenshot_2025-08-12_at_12.46.30_PM_(1).png",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/banner/1756100493819-Screenshot_2025-08-12_at_12.46.30_PM_(1).png",
+      "isActive": true
+    },
+    {
+      "image": "/uploads/banner/1756100493824-Image_result_for_insights_into_action.jpeg",
+      "isActive": true
+    }
+  ],
+  "tournaments": [
+    {
+      "image": "/uploads/tournaments/1756100481016-Image_result_for_insights_into_action.jpeg",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/tournaments/1756100493824-Image_result_for_insights_into_action.jpeg",
+      "isActive": true
+    }
   ]
 }
