@@ -19,7 +19,7 @@ app.use("/api/game", require("./src/routes/gameRoute"));
 app.use("/api/admin", require("./src/routes/adminRoute"));
 app.use("/uploads", express.static("uploads"));
 app.use("/api/assets", require("./src/routes/assetRoute"));
-
+app.use("/api/payment", require("./src/routes/paymentRoute"));
 
 const server = http.createServer(app);
 const io = initSocket(server);
