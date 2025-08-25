@@ -32,6 +32,10 @@ exports.createPayment = async (req) => {
       screenshot: file.path,
     });
 
+    if (global.io) {
+      global.io.emit("pending_payments_list", await Payment.find({ status: "pending" }));
+    }
+
     return {
       status: statusCode.OK,
       success: true,
