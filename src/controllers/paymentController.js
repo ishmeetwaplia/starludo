@@ -12,15 +12,3 @@ exports.createPaymentController = async (req) => {
     };
   }
 };
-
-exports.getUserPaymentsController = async (req) => {
-  try {
-    return await service.getUserPayments(req);
-  } catch (error) {
-    return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
-      success: false,
-      message: error.message,
-    };
-  }
-};

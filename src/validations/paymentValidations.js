@@ -5,11 +5,6 @@ const createPaymentSchema = Joi.object({
   amount: Joi.number().min(10).max(25000).required(),
 });
 
-const getUserPaymentsSchema = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-});
-
 module.exports = {
   createPaymentSchema,
   getUserPaymentsSchema,

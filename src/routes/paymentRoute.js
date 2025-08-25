@@ -9,7 +9,4 @@ const { createPaymentSchema, getUserPaymentsSchema } = require("../validations/p
 const router = express.Router();
 
 router.post("/",verifyToken, uploadPayment.single("screenshot"), validate(createPaymentSchema), responseHandler(controller.createPaymentController));
-
-router.get("/", verifyToken, validate(getUserPaymentsSchema, "query"), responseHandler(controller.getUserPaymentsController));
-
 module.exports = router;

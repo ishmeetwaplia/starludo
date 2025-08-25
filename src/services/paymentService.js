@@ -47,22 +47,3 @@ exports.createPayment = async (req) => {
   }
 };
 
-exports.getUserPayments = async (req) => {
-  try {
-    const { _id } = req.auth;
-    const payments = await Payment.find({ userId: _id }).sort({ createdAt: -1 });
-
-    return {
-      status: statusCode.OK,
-      success: true,
-      message: "Payments fetched successfully",
-      data: payments,
-    };
-  } catch (error) {
-    return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
-      success: false,
-      message: error.message,
-    };
-  }
-};
