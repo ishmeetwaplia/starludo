@@ -18,7 +18,7 @@ const PaymentSchema = new mongoose.Schema(
       min: 1,
     },
     screenshot: {
-      type: String, // path to uploaded file
+      type: String, 
       required: true,
     },
     status: {

@@ -7,5 +7,4 @@ const createPaymentSchema = Joi.object({
 
 module.exports = {
   createPaymentSchema,
-  getUserPaymentsSchema,
 };
