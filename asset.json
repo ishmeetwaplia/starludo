@@ -43,6 +43,11 @@
     {
       "image": "/uploads/scanners/1756099567838-dave-goudreau-zZvtj8EpE0s-unsplash.jpg",
       "upiId": "pppppp",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756101515977-WhatsApp_Image_2025-08-23_at_14.56.58.jpeg",
+      "upiId": "6367891ibl",
       "isActive": true
     }
   ],

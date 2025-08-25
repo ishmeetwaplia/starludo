@@ -1,6 +1,6 @@
-const { statusCode, resMessage } = require("../config/constant");
+const { statusCode  , resMessage} = require("../config/constant");
 const Game = require("../models/Game");
-const User = require('../models/User');
+const User = require("../models/User");
 
 exports.createBet = async (req) => {
   try {
@@ -39,6 +39,71 @@ exports.createBet = async (req) => {
       message: "Bet created successfully",
       data: game
     };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+exports.submitWinning = async (req) => {
+  try {
+    const { _id } = req.auth;
+    const { gameId, result } = req.body;
+    const file = req.file;
+
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.GAME_NOT_FOUND || "Game not found"
+      };
+    }
+
+    if (result === "won") {
+      if (!file) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: resMessage.WINNING_SCREENSHOT_REQUIRED || "Winning screenshot is required"
+        };
+      }
+
+      game.winner = _id;
+      game.status = "completed";
+      game.winningScreenshot = file.path;
+      await game.save();
+
+      return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.WINNING_SUBMITTED || "Winning submitted successfully",
+        data: game
+      };
+    }
+
+    if (result === "lost") {
+      game.loser = _id;
+      game.status = "completed";
+      await game.save();
+
+      return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.GAME_MARKED_LOST || "Game marked as lost",
+        data: game
+      };
+    }
+
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: "Invalid result value. Allowed: 'won' or 'lost'"
+    };
+
   } catch (error) {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,

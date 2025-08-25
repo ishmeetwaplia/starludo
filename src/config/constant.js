@@ -42,6 +42,11 @@ const resMessage = {
     USERS_FETCHED: "All users fetched successfully",
     No_pending_game_found_for_this_user: "No pending game found for this user",
     Room_id_created_successfully: "Room id created successfully",
+    GAME_NOT_FOUND: "Game not found",
+    GAME_ALREADY_COMPLETED: "Game is already completed",
+    WINNING_SCREENSHOT_REQUIRED: "Winning screenshot is required",
+    GAME_MARKED_LOST: "Game marked as lost",
+    WINNING_SUBMITTED: "Winning submitted successfully",
 };
 
 module.exports = {

@@ -12,3 +12,15 @@ exports.createBetController = async (req) => {
     };
   }
 };
+
+exports.submitWinningController = async (req) => {
+  try {
+    return await service.submitWinning(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
