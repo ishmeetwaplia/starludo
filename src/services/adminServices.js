@@ -177,6 +177,7 @@ exports.getAllUsers = async (query) => {
 
     const filter = {};
 
+    filter.role = "user";
     if (isActive !== undefined) filter.isActive = isActive === "true"; 
     if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
 
