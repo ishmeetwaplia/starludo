@@ -6,6 +6,7 @@ const { statusCode, resMessage } = require("../config/constant");
 const fs = require("fs");
 const path = require("path");
 const Payment = require("../models/Payment");
+const Withdraw = require("../models/Withdraw")
 
 exports.login = async ({ email, password }) => {
   try {
@@ -680,20 +681,10 @@ exports.approvePayment = async (paymentId, status) => {
 
 exports.getUserPayments = async (userId, query) => {
   try {
-    console.log("wertyu" , userId, query);
-    
-    const {
-      status,
-      minAmount,
-      maxAmount,
-      page = 1,
-      limit = 10,
-    } = query;
+    const { status, minAmount, maxAmount, page = 1, limit = 10 } = query;
 
     const filter = { userId };
-
     if (status) filter.status = status;
-
     if (minAmount || maxAmount) {
       filter.amount = {};
       if (minAmount) filter.amount.$gte = Number(minAmount);
@@ -715,7 +706,7 @@ exports.getUserPayments = async (userId, query) => {
       status: statusCode.OK,
       message: "User payments fetched successfully",
       data: {
-        payments,
+        items: payments,
         total,
         page: Number(page),
         pages: Math.ceil(total / limit),
@@ -732,19 +723,10 @@ exports.getUserPayments = async (userId, query) => {
 
 exports.getUserWithdraws = async (userId, query) => {
   try {
-    console.log("wertyu" , userId, query);
-    const {
-      status,
-      minAmount,
-      maxAmount,
-      page = 1,
-      limit = 10,
-    } = query;
+    const { status, minAmount, maxAmount, page = 1, limit = 10 } = query;
 
     const filter = { userId };
-
     if (status) filter.status = status;
-
     if (minAmount || maxAmount) {
       filter.amount = {};
       if (minAmount) filter.amount.$gte = Number(minAmount);
@@ -766,7 +748,7 @@ exports.getUserWithdraws = async (userId, query) => {
       status: statusCode.OK,
       message: "User withdraws fetched successfully",
       data: {
-        withdraws,
+        items: withdraws,
         total,
         page: Number(page),
         pages: Math.ceil(total / limit),
