@@ -10,10 +10,6 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
-  // phone: Joi.string().pattern(/^[6-9]\d{9}$/).optional(),
-  // otp: Joi.string().optional(),
-  // otpExpire: Joi.date().optional(),
-  // token: Joi.string().optional(),
   password: Joi.string().min(6).optional(),
   profile: Joi.string().optional(),
   username: Joi.string().min(2).max(50).optional(),

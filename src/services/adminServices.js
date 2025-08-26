@@ -1,6 +1,5 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Game = require("../models/Game");
 const { statusCode, resMessage } = require("../config/constant");
@@ -10,7 +9,7 @@ const Payment = require("../models/Payment");
 
 exports.login = async ({ email, password }) => {
   try {
-    const admin = await Admin.findOne({ email });
+    const admin = await User.findOne({ email, role: "admin" }).select("+password");
     if (!admin) {
       return {
         status: statusCode.UNAUTHORIZED,
@@ -18,8 +17,8 @@ exports.login = async ({ email, password }) => {
         message: resMessage.INVALID_CREDENTIALS
       };
     }
-
     const isMatch = await bcrypt.compare(password, admin.password);
+    
     if (!isMatch) {
       return {
         status: statusCode.UNAUTHORIZED,
@@ -29,16 +28,19 @@ exports.login = async ({ email, password }) => {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    admin.token = token;
+    await admin.save();
 
     return {
       success: true,
       status: statusCode.OK,
       message: resMessage.LOGIN_SUCCESS,
-      data: { id: admin._id, email: admin.email, token }
+      data: { id: admin._id, email: admin.email, role: admin.role, token }
     };
   } catch (error) {
     return {
@@ -51,7 +53,7 @@ exports.login = async ({ email, password }) => {
 
 exports.getDashboard = async (adminId) => {
   try {
-    const admin = await Admin.findById(adminId).select("-password");
+    const admin = await User.findOne({ _id: adminId, role: "admin" }).select("-password");
     if (!admin) {
       return {
         status: statusCode.NOT_FOUND,
