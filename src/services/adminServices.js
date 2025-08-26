@@ -813,3 +813,38 @@ exports.getAllWithdraws = async (query) => {
   }
 };
 
+exports.approveWithdraw = async (withdrawId, status) => {
+  if (!["paid", "rejected"].includes(status)) {
+    throw new Error("Invalid status. Only 'paid' or 'rejected' allowed.");
+  }
+
+  const withdraw = await Withdraw.findById(withdrawId);
+  if (!withdraw) {
+    throw new Error("Withdraw request not found");
+  }
+
+  if (withdraw.status !== "unpaid") {
+    throw new Error("Withdraw is already processed");
+  }
+
+  withdraw.status = status;
+  await withdraw.save();
+
+  if (status === "paid") {
+    const user = await User.findById(withdraw.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.credit = (user.credit || 0) - withdraw.amount;
+    if (user.credit < 0) user.credit = 0; 
+    await user.save();
+  }
+
+  return {
+    message: `Withdraw has been ${status}`,
+    withdraw
+  };
+};
+
+

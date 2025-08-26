@@ -100,3 +100,10 @@ exports.getAllWithdraws = async (req) => {
   const result = await adminService.getAllWithdraws(req.query);
   return result;
 };
+
+exports.approveWithdraw = async (req) => {
+  const { id } = req.params;
+  const { status } = req.body; 
+  const result = await adminService.approveWithdraw(id, status);
+  return result;
+};

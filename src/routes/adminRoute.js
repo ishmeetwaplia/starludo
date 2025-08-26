@@ -15,6 +15,8 @@ const {
   getUserGameStatsQuerySchema,
   getAllPaymentsSchema,
   approvePaymentSchema,
+  getAllWithdrawsSchema,
+  approveWithdrawSchema
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -52,6 +54,7 @@ router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHand
 router.get("/payments", protect, validate(getAllPaymentsSchema, "query"), responseHandler(adminController.getAllPayments));
 router.patch( "/payments/:id/approve", protect, validate(approvePaymentSchema), responseHandler(adminController.approvePayment));
 
-router.get( '/withdraws', protect, validate(getAllWithdrawsSchema, 'query'), responseHandler(getAllWithdraws));
+router.get( '/withdraws', protect, validate(getAllWithdrawsSchema, 'query'), responseHandler(adminController.getAllWithdraws));
+router.patch( "/withdraws/:id/approve", protect, validate(approveWithdrawSchema), responseHandler(adminController.approveWithdraw));
 
 module.exports = router;
