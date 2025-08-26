@@ -12,12 +12,6 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  scanner: {
-    image: { type: String },
-    upiId: { type: String }
-  },
-  banners: [String],       
-  tournaments: [String],
 });
 
 adminSchema.pre('save', async function (next) {
