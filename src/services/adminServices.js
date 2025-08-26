@@ -762,3 +762,54 @@ exports.getUserWithdraws = async (userId, query) => {
     };
   }
 };
+
+exports.getAllWithdraws = async (query) => {
+  try {
+    const { status, search, minAmount, maxAmount, page = 1, limit = 10 } = query;
+
+    const filter = {};
+    if (status) filter.status = status;
+
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    let withdraws = await Withdraw.find(filter)
+      .populate('userId', '_id username phone credit')
+      .sort({ createdAt: -1 });
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      withdraws = withdraws.filter(
+        (w) =>
+          w.userId?.username?.toLowerCase().includes(searchLower) ||
+          w.userId?.phone?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const total = withdraws.length;
+    const skip = (page - 1) * limit;
+    withdraws = withdraws.slice(skip, skip + Number(limit));
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: 'Withdraw requests fetched successfully',
+      data: {
+        withdraws,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+

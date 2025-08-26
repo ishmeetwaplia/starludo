@@ -52,4 +52,6 @@ router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHand
 router.get("/payments", protect, validate(getAllPaymentsSchema, "query"), responseHandler(adminController.getAllPayments));
 router.patch( "/payments/:id/approve", protect, validate(approvePaymentSchema), responseHandler(adminController.approvePayment));
 
+router.get( '/withdraws', protect, validate(getAllWithdrawsSchema, 'query'), responseHandler(getAllWithdraws));
+
 module.exports = router;

@@ -95,3 +95,8 @@ exports.getUserWithdraws = async (req) => {
   const result = await adminService.getUserWithdraws(req.params.id, req.query);
   return result;
 };
+
+exports.getAllWithdraws = async (req) => {
+  const result = await adminService.getAllWithdraws(req.query);
+  return result;
+};
