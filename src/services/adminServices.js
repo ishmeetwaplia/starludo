@@ -371,13 +371,10 @@ exports.getAllGames = async (query) => {
       if (winningAmountMax) filter.winningAmount.$lte = Number(winningAmountMax);
     }
 
-    const skip = (page - 1) * limit;
-
+    // fetch without skip/limit first
     let games = await Game.find(filter)
       .populate("createdBy", "_id username")
-      .populate("acceptedBy", "_id username")
-      .skip(skip)
-      .limit(Number(limit));
+      .populate("acceptedBy", "_id username");
 
     // Apply search filter if provided
     if (search) {
@@ -390,6 +387,10 @@ exports.getAllGames = async (query) => {
     }
 
     const total = games.length; 
+
+    // Apply pagination AFTER search
+    const skip = (page - 1) * limit;
+    games = games.slice(skip, skip + Number(limit));
 
     return {
       success: true,
