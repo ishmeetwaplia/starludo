@@ -72,6 +72,15 @@ const updateScannerOrUpiSchema = Joi.object({
   upiId: Joi.string().pattern(/^[\w.-]+@[\w.-]+$/).optional(),
 }).or("scannerUrl", "upiId");
 
+const getAllPaymentsSchema = Joi.object({
+  status: Joi.string()
+    .valid("pending", "approved", "rejected")
+    .optional(),
+  search: Joi.string().trim().optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -82,4 +91,5 @@ module.exports = {
   addCreditSchema,
   getUserGameStatsQuerySchema,
   updateScannerOrUpiSchema,
+  getAllPaymentsSchema,
 };

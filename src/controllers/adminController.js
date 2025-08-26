@@ -73,3 +73,8 @@ exports.uploadAssets = async (req) => {
 
   return result;
 };
+
+exports.getAllPayments = async (req) => {
+  const result = await adminService.getAllPayments(req.query);
+  return result;
+};
