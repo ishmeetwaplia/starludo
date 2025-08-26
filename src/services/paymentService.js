@@ -7,13 +7,21 @@ exports.createPayment = async (req) => {
     const { utrNumber, amount } = req.body;
     const file = req.file;
 
-    // 🔹 Check if UTR already exists
     const existingPayment = await Payment.findOne({ utrNumber: utrNumber.trim() });
     if (existingPayment) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
         message: "This UTR number has already been used",
+      };
+    }
+
+    const pendingPayment = await Payment.findOne({ userId: _id, status: "pending" });
+    if (pendingPayment) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You already have a pending payment request",
       };
     }
 
@@ -42,4 +50,3 @@ exports.createPayment = async (req) => {
     };
   }
 };
-

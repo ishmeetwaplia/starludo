@@ -13,5 +13,6 @@ router.get("/logout", verifyToken, responseHandler(controller.logoutController))
 router.post("/credit", verifyToken, validate(credit), responseHandler(controller.addCreditController));
 router.get("/credit", verifyToken, responseHandler(controller.getCreditController));
 router.get("/payments", verifyToken, responseHandler(controller.getUserPaymentsController));
+router.post("/withdraw", verifyToken, responseHandler(controller.createWithdrawController));
 
 module.exports = router;

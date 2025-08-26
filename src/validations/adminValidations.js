@@ -77,6 +77,11 @@ const getAllPaymentsSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const approvePaymentSchema = Joi.object({
+  status: Joi.string().valid("approved", "rejected").required()
+});
+
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -88,4 +93,5 @@ module.exports = {
   getUserGameStatsQuerySchema,
   updateScannerOrUpiSchema,
   getAllPaymentsSchema,
+  approvePaymentSchema,
 };

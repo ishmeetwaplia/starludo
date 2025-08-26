@@ -77,6 +77,10 @@ exports.submitWinning = async (req) => {
       game.winningScreenshot = file.path;
       await game.save();
 
+      if (global.io) {
+        global.io.emit("game_over", game);
+      }
+
       return {
         status: statusCode.OK,
         success: true,
@@ -89,6 +93,10 @@ exports.submitWinning = async (req) => {
       game.loser = _id;
       game.status = "completed";
       await game.save();
+
+      if (global.io) {
+        global.io.emit("game_over", game);
+      }
 
       return {
         status: statusCode.OK,

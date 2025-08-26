@@ -78,3 +78,10 @@ exports.getAllPayments = async (req) => {
   const result = await adminService.getAllPayments(req.query);
   return result;
 };
+
+exports.approvePayment = async (req) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const result = await adminService.approvePayment(id, status);
+  return result;
+};

@@ -1,6 +1,7 @@
 const { statusCode, resMessage } = require('../config/constant');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
+const Withdraw = require("../models/Withdraw");
 
 exports.profile = async (req) => {
     try {
@@ -208,4 +209,72 @@ exports.getUserPayments = async (req) => {
   }
 };
 
+exports.createWithdraw = async (req) => {
+  try {
+    const { _id } = req.auth;
+    const { amount, upiId, bankAccount, ifsc } = req.body;
 
+    const user = await User.findById(_id);
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found
+      };
+    }
+
+    if (Number(user.winningAmount) < 200) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You must have at least 200 in winning amount to withdraw"
+      };
+    }
+
+    const maxWithdrawable =
+      Number(user.winningAmount) +
+      Number(user.referralEarning) -
+      Number(user.penalty) +
+      Number(user.credit);
+
+    if (amount > maxWithdrawable) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Maximum withdrawable amount is ${maxWithdrawable}`
+      };
+    }
+
+    const existingWithdraw = await Withdraw.findOne({ userId: _id, status: "unpaid" });
+    if (existingWithdraw) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You already have a pending withdraw request"
+      };
+    }
+
+    const withdraw = new Withdraw({
+      userId: _id,
+      amount,
+      upiId,
+      bankAccount,
+      ifsc
+    });
+
+    await withdraw.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Withdraw request created successfully",
+      data: withdraw
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
