@@ -350,6 +350,7 @@ exports.getAllGames = async (query) => {
       betAmountMax,
       winningAmountMin,
       winningAmountMax,
+      search, 
       page = 1,
       limit = 10,
     } = query;
@@ -372,13 +373,23 @@ exports.getAllGames = async (query) => {
 
     const skip = (page - 1) * limit;
 
-    const games = await Game.find(filter)
+    let games = await Game.find(filter)
       .populate("createdBy", "_id username")
       .populate("acceptedBy", "_id username")
       .skip(skip)
       .limit(Number(limit));
 
-    const total = await Game.countDocuments(filter);
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      games = games.filter(
+        (g) =>
+          (g.createdBy?.username?.toLowerCase().includes(searchLower)) ||
+          (g.acceptedBy?.username?.toLowerCase().includes(searchLower))
+      );
+    }
+
+    const total = games.length; 
 
     return {
       success: true,

@@ -54,6 +54,7 @@ const getAllGamesSchema = Joi.object({
   winningAmountMax: Joi.number().min(0).optional(),
   page: Joi.number().integer().min(1).optional(),
   limit: Joi.number().integer().min(1).max(100).optional(),
+  search: Joi.string().trim().optional(),
 });
 
 const addCreditSchema = Joi.object({
