@@ -25,7 +25,6 @@ exports.createPayment = async (req) => {
     });
 
     if (global.io) {
-      global.io.emit("pending_payments_list", await Payment.find({ status: "pending" }));
       global.io.emit("new_payment", payment);
     }
 
