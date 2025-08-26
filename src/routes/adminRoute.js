@@ -13,6 +13,7 @@ const {
   getAllGamesSchema,
   addCreditSchema,
   getUserGameStatsQuerySchema,
+  getAllPaymentsSchema
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -43,5 +44,8 @@ router.get("/users/:id/games", protect,  validate(getUserGameStatsQuerySchema, "
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));
+
+//Admin -> payments 
+router.get("/payments", protect, validate(getAllPaymentsSchema, "query"), responseHandler(adminController.getAllPayments));
 
 module.exports = router;

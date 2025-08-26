@@ -5,7 +5,11 @@ const UserSchema = new mongoose.Schema({
     type: String,
     trim: true,
     unique: true,
-    required: true
+  },
+  email: { 
+    type: String,
+    trim: true,
+    unique: true,
   },
   otp: { 
     type: String,
@@ -62,13 +66,18 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-   credit: {
+  credit: {
     type: Number,
     default: 0
   },
   isBanned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
-  fullName: { type: String },         
+  fullName: { type: String },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user"
+  }
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("User", UserSchema);

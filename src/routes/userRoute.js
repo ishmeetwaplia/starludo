@@ -12,5 +12,6 @@ router.put("/profile", verifyToken, responseHandler(controller.updateProfileCont
 router.get("/logout", verifyToken, responseHandler(controller.logoutController));
 router.post("/credit", verifyToken, validate(credit), responseHandler(controller.addCreditController));
 router.get("/credit", verifyToken, responseHandler(controller.getCreditController));
+router.get("/payments", verifyToken, responseHandler(controller.getUserPaymentsController));
 
 module.exports = router;

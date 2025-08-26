@@ -10,10 +10,6 @@ const createUserSchema = Joi.object({
 });
 
 const updateUserSchema = Joi.object({
-  // phone: Joi.string().pattern(/^[6-9]\d{9}$/).optional(),
-  // otp: Joi.string().optional(),
-  // otpExpire: Joi.date().optional(),
-  // token: Joi.string().optional(),
   password: Joi.string().min(6).optional(),
   profile: Joi.string().optional(),
   username: Joi.string().min(2).max(50).optional(),
@@ -54,6 +50,7 @@ const getAllGamesSchema = Joi.object({
   winningAmountMax: Joi.number().min(0).optional(),
   page: Joi.number().integer().min(1).optional(),
   limit: Joi.number().integer().min(1).max(100).optional(),
+  search: Joi.string().trim().optional(),
 });
 
 const addCreditSchema = Joi.object({
@@ -71,6 +68,15 @@ const updateScannerOrUpiSchema = Joi.object({
   upiId: Joi.string().pattern(/^[\w.-]+@[\w.-]+$/).optional(),
 }).or("scannerUrl", "upiId");
 
+const getAllPaymentsSchema = Joi.object({
+  status: Joi.string()
+    .valid("pending", "approved", "rejected")
+    .optional(),
+  search: Joi.string().trim().optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -81,4 +87,5 @@ module.exports = {
   addCreditSchema,
   getUserGameStatsQuerySchema,
   updateScannerOrUpiSchema,
+  getAllPaymentsSchema,
 };

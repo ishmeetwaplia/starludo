@@ -15,7 +15,7 @@ exports.verifyToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
       return res.status(statusCode.UNAUTHORIZED).json({
@@ -30,7 +30,15 @@ exports.verifyToken = async (req, res, next) => {
         status: statusCode.UNAUTHORIZED,
         success: false,
         message: resMessage.Token_invalid,
-      })
+      });
+    }
+
+    if (user.role !== "user") {
+      return res.status(statusCode.UNAUTHORIZED).json({
+        status: statusCode.UNAUTHORIZED,
+        success: false,
+        message: resMessage.Not_authorized,
+      });
     }
 
     req.auth = user;

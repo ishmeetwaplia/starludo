@@ -1,15 +1,15 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Game = require("../models/Game");
 const { statusCode, resMessage } = require("../config/constant");
 const fs = require("fs");
 const path = require("path");
+const Payment = require("../models/Payment");
 
 exports.login = async ({ email, password }) => {
   try {
-    const admin = await Admin.findOne({ email });
+    const admin = await User.findOne({ email, role: "admin" }).select("+password");
     if (!admin) {
       return {
         status: statusCode.UNAUTHORIZED,
@@ -17,8 +17,8 @@ exports.login = async ({ email, password }) => {
         message: resMessage.INVALID_CREDENTIALS
       };
     }
-
     const isMatch = await bcrypt.compare(password, admin.password);
+    
     if (!isMatch) {
       return {
         status: statusCode.UNAUTHORIZED,
@@ -28,16 +28,19 @@ exports.login = async ({ email, password }) => {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    admin.token = token;
+    await admin.save();
 
     return {
       success: true,
       status: statusCode.OK,
       message: resMessage.LOGIN_SUCCESS,
-      data: { id: admin._id, email: admin.email, token }
+      data: { id: admin._id, email: admin.email, role: admin.role, token }
     };
   } catch (error) {
     return {
@@ -50,7 +53,7 @@ exports.login = async ({ email, password }) => {
 
 exports.getDashboard = async (adminId) => {
   try {
-    const admin = await Admin.findById(adminId).select("-password");
+    const admin = await User.findOne({ _id: adminId, role: "admin" }).select("-password");
     if (!admin) {
       return {
         status: statusCode.NOT_FOUND,
@@ -350,6 +353,7 @@ exports.getAllGames = async (query) => {
       betAmountMax,
       winningAmountMin,
       winningAmountMax,
+      search, 
       page = 1,
       limit = 10,
     } = query;
@@ -370,15 +374,26 @@ exports.getAllGames = async (query) => {
       if (winningAmountMax) filter.winningAmount.$lte = Number(winningAmountMax);
     }
 
-    const skip = (page - 1) * limit;
-
-    const games = await Game.find(filter)
+    // fetch without skip/limit first
+    let games = await Game.find(filter)
       .populate("createdBy", "_id username")
-      .populate("acceptedBy", "_id username")
-      .skip(skip)
-      .limit(Number(limit));
+      .populate("acceptedBy", "_id username");
 
-    const total = await Game.countDocuments(filter);
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      games = games.filter(
+        (g) =>
+          (g.createdBy?.username?.toLowerCase().includes(searchLower)) ||
+          (g.acceptedBy?.username?.toLowerCase().includes(searchLower))
+      );
+    }
+
+    const total = games.length; 
+
+    // Apply pagination AFTER search
+    const skip = (page - 1) * limit;
+    games = games.slice(skip, skip + Number(limit));
 
     return {
       success: true,
@@ -569,6 +584,59 @@ exports.uploadAssetsService = async (banners, tournaments) => {
       data: {
         banners: newBanners,
         tournaments: newTournaments,
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.getAllPayments = async (query) => {
+  try {
+    const {
+      status,
+      search,
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const filter = {};
+    if (status) filter.status = status;
+
+    // fetch without skip/limit first
+    let payments = await Payment.find(filter)
+      .populate("userId", "_id username phone credit")
+      .sort({ createdAt: -1 });
+
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      payments = payments.filter(
+        (p) =>
+          p.utrNumber?.toLowerCase().includes(searchLower) ||
+          p.userId?.username?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const total = payments.length;
+
+    // Apply pagination AFTER search
+    const skip = (page - 1) * limit;
+    payments = payments.slice(skip, skip + Number(limit));
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Payments fetched successfully",
+      data: {
+        payments,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
       },
     };
   } catch (error) {

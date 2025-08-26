@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const Admin = require("../models/Admin");
+const User = require("../models/User");
 
 exports.protect = async (req, res, next) => {
   let token;
@@ -10,11 +10,10 @@ exports.protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
-
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.admin = await Admin.findById(decoded.id).select("_id email");
-      if (!req.admin) {
+      req.admin = await User.findById(decoded.id).select("_id email role");
+      if (!req.admin || req.admin.role !== "admin") {
         return res.status(401).json({ success: false, message: "Not authorized" });
       }
 
