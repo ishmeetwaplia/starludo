@@ -20,6 +20,8 @@ const createPaymentSchema = Joi.object({
       "number.max": "Amount cannot exceed 25,000",
       "any.required": "Amount is required",
     }),
+  screenshot: Joi.any()
+    .optional()
 });
 
 module.exports = {
