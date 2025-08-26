@@ -7,14 +7,6 @@ exports.createPayment = async (req) => {
     const { utrNumber, amount } = req.body;
     const file = req.file;
 
-    if (!utrNumber || !amount || !file) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: "UTR number, amount and screenshot are required",
-      };
-    }
-
     // 🔹 Check if UTR already exists
     const existingPayment = await Payment.findOne({ utrNumber: utrNumber.trim() });
     if (existingPayment) {
@@ -29,7 +21,7 @@ exports.createPayment = async (req) => {
       userId: _id,
       utrNumber: utrNumber.trim(),
       amount,
-      screenshot: file.path,
+      screenshot: file?.path,
     });
 
     if (global.io) {
