@@ -1,5 +1,6 @@
 const { statusCode, resMessage } = require('../config/constant');
 const User = require('../models/User');
+const Payment = require('../models/Payment');
 
 exports.profile = async (req) => {
     try {
@@ -150,4 +151,61 @@ exports.getCredit = async (req) => {
     };
   }
 };
+
+exports.getUserPayments = async (req) => {
+  try {
+    const { _id } = req.auth;
+    let { page = 1, limit = 10, minAmount, maxAmount, status, startDate, endDate } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
+
+    const filter = { userId: _id };
+
+    if (status && ["pending", "approved", "rejected"].includes(status)) {
+      filter.status = status;
+    }
+
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const payments = await Payment.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const total = await Payment.countDocuments(filter);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Payments fetched successfully",
+      data: {
+        payments,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
 
