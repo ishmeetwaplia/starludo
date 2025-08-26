@@ -647,3 +647,33 @@ exports.getAllPayments = async (query) => {
     };
   }
 };
+
+exports.approvePayment = async (paymentId, status) => {
+  const payment = await Payment.findById(paymentId);
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.status !== "pending") {
+    throw new Error("Payment is already processed");
+  }
+
+  payment.status = status;
+  await payment.save();
+
+  if (status === "approved") {
+    // Increase user credit
+    const user = await User.findById(payment.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.credit = (user.credit || 0) + payment.amount;
+    await user.save();
+  }
+
+  return {
+    message: `Payment has been ${status}`,
+    payment
+  };
+};
