@@ -245,6 +245,15 @@ exports.createWithdraw = async (req) => {
       };
     }
 
+    const existingWithdraw = await Withdraw.findOne({ userId: _id, status: "unpaid" });
+    if (existingWithdraw) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You already have a pending withdraw request"
+      };
+    }
+
     const withdraw = new Withdraw({
       userId: _id,
       amount,
@@ -269,5 +278,3 @@ exports.createWithdraw = async (req) => {
     };
   }
 };
-
-
