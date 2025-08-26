@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const Game = require("./src/models/Game");
+const Payment = require("./src/models/Payment");
 
 function initSocket(server) {
   const io = new Server(server, {
@@ -161,6 +162,33 @@ function initSocket(server) {
 
       } catch (error) {
         console.error("Error canceling game request:", error);
+      }
+    });
+
+    socket.on("update_payment_status", async ({ paymentId, status }) => {
+      try {
+        if (!["approved", "rejected", "pending"].includes(status)) {
+          return socket.emit("error_message", { message: "Invalid status" });
+        }
+
+        const payment = await Payment.findById(paymentId).populate("userId", "username");
+        if (!payment) return;
+
+        payment.status = status;
+        await payment.save();
+
+        // 🔹 Notify the user who made the payment
+        const userId = payment.userId._id.toString();
+        const userSocketId = userSocketMap[userId];
+        if (userSocketId) {
+          io.to(userSocketId).emit("payment_update", {
+            message: `Your payment has been ${status}`,
+            payment,
+          });
+        }
+
+      } catch (error) {
+        console.error("Error approving payment:", error);
       }
     });
 

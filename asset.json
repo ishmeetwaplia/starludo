@@ -48,6 +48,11 @@
     {
       "image": "/uploads/scanners/1756101515977-WhatsApp_Image_2025-08-23_at_14.56.58.jpeg",
       "upiId": "6367891ibl",
+      "isActive": false
+    },
+    {
+      "image": "/uploads/scanners/1756190367504-WhatsApp_Image_2025-08-23_at_14.56.58.jpeg",
+      "upiId": "oiuyhgyui",
       "isActive": true
     }
   ],
