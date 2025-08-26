@@ -40,8 +40,7 @@ const GameSchema = new mongoose.Schema({
     default: null
   },
   roomId: {   
-    type: String,
-    required: true
+    type: String
   }
 }, { timestamps: true, versionKey: false });
 
