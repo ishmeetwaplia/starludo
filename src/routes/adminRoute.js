@@ -42,6 +42,8 @@ router.patch("/users/:id/ban", protect, validate(banUserSchema), responseHandler
 router.put("/users/:id", protect, validate(updateUserSchema), responseHandler(adminController.updateUser));
 router.put("/users/:id/credit", protect, validate(addCreditSchema), responseHandler(adminController.addCredit));
 router.get("/users/:id/games", protect,  validate(getUserGameStatsQuerySchema, "query"), responseHandler(adminController.getUserGameStats));
+router.get( "/users/:id/payments", protect ,responseHandler( adminController.getUserPayments));
+router.get( "/users/:id/withdraws", protect, responseHandler(adminController.getUserWithdraws));
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));

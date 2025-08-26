@@ -677,3 +677,106 @@ exports.approvePayment = async (paymentId, status) => {
     payment
   };
 };
+
+exports.getUserPayments = async (userId, query) => {
+  try {
+    console.log("wertyu" , userId, query);
+    
+    const {
+      status,
+      minAmount,
+      maxAmount,
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const filter = { userId };
+
+    if (status) filter.status = status;
+
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const payments = await Payment.find(filter)
+      .populate("userId", "_id username phone credit")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Payment.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User payments fetched successfully",
+      data: {
+        payments,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.getUserWithdraws = async (userId, query) => {
+  try {
+    console.log("wertyu" , userId, query);
+    const {
+      status,
+      minAmount,
+      maxAmount,
+      page = 1,
+      limit = 10,
+    } = query;
+
+    const filter = { userId };
+
+    if (status) filter.status = status;
+
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const withdraws = await Withdraw.find(filter)
+      .populate("userId", "_id username phone credit")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Withdraw.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User withdraws fetched successfully",
+      data: {
+        withdraws,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
