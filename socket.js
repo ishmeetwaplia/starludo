@@ -167,9 +167,7 @@ function initSocket(server) {
 
     socket.on("update_payment_status", async ({ paymentId, status }) => {
       try {
-        if (!["approved", "rejected", "pending"].includes(status)) {
-          return socket.emit("error_message", { message: "Invalid status" });
-        }
+        if (!["approved", "rejected", "pending"].includes(status)) return;
 
         const payment = await Payment.findById(paymentId).populate("userId", "username");
         if (!payment) return;
