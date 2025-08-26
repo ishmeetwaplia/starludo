@@ -232,10 +232,8 @@ exports.createWithdraw = async (req) => {
     }
 
     const maxWithdrawable =
-      Number(user.winningAmount) +
-      Number(user.referralEarning) -
-      Number(user.penalty) +
-      Number(user.credit);
+      Number(user.winningAmount) -
+      Number(user.penalty)
 
     if (amount > maxWithdrawable) {
       return {
