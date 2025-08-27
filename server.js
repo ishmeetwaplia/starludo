@@ -1,4 +1,5 @@
 const express = require("express");
+require("./logger");
 const dotenv = require("dotenv");
 const connectDB = require("./src/config/db");
 const cors = require("cors");
