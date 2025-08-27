@@ -68,10 +68,15 @@ exports.updateProfile = async (req) => {
       };
     }
 
-    if (username && userInfo.updateUsername) {
-      userInfo.username = username;
-      userInfo.updateUsername = false; 
+    if (!username || !userInfo.updateUsername) {
+       return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "Username can't be updated."
+        };
     }
+    userInfo.username = username;
+    userInfo.updateUsername = false;
 
     await userInfo.save();
 
