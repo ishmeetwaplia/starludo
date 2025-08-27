@@ -119,7 +119,7 @@ exports.submitWinning = async (req) => {
       };
     }
 
-    if (result === "quit") {
+    if (result === "cancel") {
       game.status = "quit";
       await game.save();
 
@@ -138,7 +138,7 @@ exports.submitWinning = async (req) => {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
-      message: "Invalid result value. Allowed: 'won', 'lost', or 'quit'"
+      message: "Invalid result value. Allowed: 'won', 'lost', or 'cancel'"
     };
 
   } catch (error) {
