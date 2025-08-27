@@ -73,6 +73,10 @@ const UserSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   fullName: { type: String },
+  updateUsername: {
+    type: Boolean,
+    default: true
+  },
   role: {
     type: String,
     enum: ["user", "admin"],
