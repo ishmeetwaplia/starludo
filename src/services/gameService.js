@@ -25,6 +25,19 @@ exports.createBet = async (req) => {
       };
     }
 
+    const existingGame = await Game.findOne({
+      createdBy: _id,
+      status: { $in: ["pending", "requested" ,"started"] }
+    });
+
+    if (existingGame) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You already have an active bet. Please complete or cancel it before creating a new one."
+      };
+    }
+
     const winningAmount = Math.floor(0.8 * 2 * betAmount);
 
     const game = await Game.create({ createdBy: _id, betAmount, winningAmount, roomId });

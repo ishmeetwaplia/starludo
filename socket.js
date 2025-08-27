@@ -69,6 +69,50 @@ function initSocket(server) {
       }
     }, 1000);
 
+    setInterval(async () => {
+      try {
+
+        const games = await Game.find({ status: "started" })
+          .populate("createdBy", "username credit")
+          .populate("acceptedBy", "username credit");
+
+
+        for (const game of games) {
+          const inactiveTime = Date.now() - new Date(game.updatedAt).getTime();
+
+          if (inactiveTime > 2 * 60 * 1000) {
+
+            game.status = "cancelled";
+            await game.save();
+
+            const creatorId = game.createdBy?._id?.toString();
+            const accepterId = game.acceptedBy?._id?.toString();
+
+            const creatorSocketId = creatorId ? userSocketMap[creatorId] : null;
+            const accepterSocketId = accepterId ? userSocketMap[accepterId] : null;
+
+            if (creatorSocketId) {
+              io.to(creatorSocketId).emit("game_over", {
+                gameId: game._id,
+                status: game.status,
+                message: "Game cancelled due to inactivity",
+              });
+            }
+
+            if (accepterSocketId) {
+              io.to(accepterSocketId).emit("game_over", {
+                gameId: game._id,
+                status: game.status,
+                message: "Game cancelled due to inactivity",
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error in inactive game cancel loop:", error);
+      }
+    }, 1000);
+
     socket.on("register_user", async (userId) => {
       console.log("Registering user:", userId);
       userSocketMap[userId] = socket.id;
@@ -139,8 +183,8 @@ function initSocket(server) {
     socket.on("start_game", async (gameId) => {
       try {
         const game = await Game.findById(gameId)
-          .populate("createdBy", "_id username credit playingAmount")
-          .populate("acceptedBy", "_id username credit playingAmount");
+          .populate("createdBy", "_id username credit ")
+          .populate("acceptedBy", "_id username credit ");
 
         if (!game || !game.acceptedBy) return;
 
@@ -158,10 +202,10 @@ function initSocket(server) {
         const betAmount = game.betAmount;
         await Promise.all([
           User.findByIdAndUpdate(game.createdBy._id, {
-            $inc: { credit: -betAmount, playingAmount: betAmount }
+            $inc: { credit: -betAmount }
           }),
           User.findByIdAndUpdate(game.acceptedBy._id, {
-            $inc: { credit: -betAmount, playingAmount: betAmount }
+            $inc: { credit: -betAmount }
           })
         ]);
 
