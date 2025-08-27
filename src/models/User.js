@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
+  referBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
   phone: { 
     type: String,
     trim: true,

@@ -63,4 +63,14 @@ exports.password = Joi.object({
       "string.min": "Password must be at least 6 characters long",
       "string.empty": "Password cannot be empty",
     }),
+  referCode: Joi.string()
+    .trim()
+    .min(6)
+    .allow("", null)
+    .optional()
+    .messages({
+      "any.required": "Refer code is required",
+      "string.min": "Refer code must be at least 6 characters long",
+      "string.empty": "Refer code cannot be empty",
+    }),
 });
