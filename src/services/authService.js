@@ -9,26 +9,29 @@ exports.sendOTP = async (req) => {
     const { phone } = req.body;
 
     let user = await User.findOne({ phone });
-    if (!user) user = new User({ phone });
 
-    const otp = "123456"
-    user.otp = otp;
+    if (!user) {
+      user = new User({ phone });
+    }
+
+    // Generate random 6-digit OTP
+    // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.otp = '123456';
     user.otpExpire = Date.now() + 5 * 60 * 1000;
 
     await user.save();
-
-    console.log(`OTP for ${phone} is ${otp}`);
 
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.OTP_SENT,
-    }
+    };
   } catch (error) {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: error.message
+      message: error.message,
     };
   }
 };
