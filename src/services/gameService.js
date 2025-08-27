@@ -124,7 +124,7 @@ exports.submitWinning = async (req) => {
       await game.save();
 
       if (global.io) {
-        global.io.emit("game_quit", game);
+        global.io.emit("game_over", game);
       }
 
       return {
