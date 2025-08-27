@@ -12,7 +12,8 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:3000",
-    "https://sta-ludo-pro1.vercel.app"
+    "https://sta-ludo-pro1.vercel.app",
+    "https://stat-ludo-admin.vercel.app"
 ];
 
 app.use(express.json());
@@ -30,7 +31,11 @@ app.use(
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
-
+app.use(express.json({
+  verify: (req, res, buf) => {
+    console.log("Raw request body:", buf.toString());
+  }
+}));
 
 app.use("/api/auth", require("./src/routes/authRoute"));
 app.use("/api/user", require("./src/routes/userRoute"));
