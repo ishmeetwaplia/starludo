@@ -119,10 +119,26 @@ exports.submitWinning = async (req) => {
       };
     }
 
+    if (result === "quit") {
+      game.status = "quit";
+      await game.save();
+
+      if (global.io) {
+        global.io.emit("game_quit", game);
+      }
+
+      return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.GAME_QUIT || "Game has been quit",
+        data: game
+      };
+    }
+
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
-      message: "Invalid result value. Allowed: 'won' or 'lost'"
+      message: "Invalid result value. Allowed: 'won', 'lost', or 'quit'"
     };
 
   } catch (error) {
