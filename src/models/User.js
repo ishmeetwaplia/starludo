@@ -73,6 +73,10 @@ const UserSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   fullName: { type: String },
+  playingAmount: {
+    type: Number,
+    default: 0
+  },
   updateUsername: {
     type: Boolean,
     default: true
