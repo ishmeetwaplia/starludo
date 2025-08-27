@@ -85,7 +85,7 @@ exports.submitWinning = async (req) => {
         };
       }
 
-      game.winner = _id;
+      // game.winner = _id;
       game.status = "completed";
       game.winningScreenshot = file.path;
       await game.save();
@@ -121,6 +121,7 @@ exports.submitWinning = async (req) => {
 
     if (result === "cancel") {
       game.status = "quit";
+       game.loser = _id;
       await game.save();
 
       if (global.io) {

@@ -80,7 +80,7 @@ function initSocket(server) {
         for (const game of games) {
           const inactiveTime = Date.now() - new Date(game.updatedAt).getTime();
 
-          if (inactiveTime > 2 * 60 * 1000) {
+          if (inactiveTime > 20 * 60 * 1000) {
 
             game.status = "cancelled";
             await game.save();
