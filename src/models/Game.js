@@ -13,8 +13,13 @@ const GameSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "requested", "started", "completed", "cancelled", "expired", "quit" , "accepted"],
+    enum: ["pending", "requested", "started", "completed", "cancelled", "expired", "quit"],
     default: "pending"
+  },
+   adminstatus: {
+    type: String,
+    enum: ["notDecided", "decided"],
+    default: "notDecided"
   },
   betAmount: {
     type: Number,
