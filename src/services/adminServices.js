@@ -924,8 +924,11 @@ exports.approveWithdraw = async (withdrawId, status) => {
       throw new Error("User not found");
     }
 
-    user.credit = (user.credit || 0) - withdraw.amount;
-    if (user.credit < 0) user.credit = 0; 
+    const oldWinningAmount = Number(user.winningAmount) || 0;
+    const deductAmount = Number(withdraw.amount) || 0;
+    const newWinningAmount = oldWinningAmount - deductAmount < 0 ? 0 : oldWinningAmount - deductAmount;
+
+    user.winningAmount = String(newWinningAmount);
     await user.save();
   }
 

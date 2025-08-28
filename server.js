@@ -1,6 +1,7 @@
 const express = require("express");
 require("./logger");
 const dotenv = require("dotenv");
+dotenv.config();
 const connectDB = require("./src/config/db");
 const cors = require("cors");
 const http = require("http");
@@ -13,6 +14,7 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:3000",
+    "http://localhost:4000",
     "https://sta-ludo-mgvh.vercel.app",
     "https://stat-ludo-admin.vercel.app",
     "https://indianludoking.com"
