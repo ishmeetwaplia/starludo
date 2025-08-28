@@ -13,7 +13,7 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:3000",
-    "https://sta-ludo-pro1.vercel.app",
+    "https://sta-ludo-mgvh.vercel.app",
     "https://stat-ludo-admin.vercel.app"
 ];
 
