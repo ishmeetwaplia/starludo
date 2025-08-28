@@ -944,9 +944,13 @@ exports.decideGame = async (gameId, winnerId) => {
     game.status = "completed"; 
     await game.save();
 
-    await User.findByIdAndUpdate(winnerId, {
-      $inc: { winningAmount: game.winningAmount }
-    });
+    const user = await User.findById(winnerId);
+    if (user) {
+      const oldAmount = Number(user.winningAmount) || 0;
+      const addAmount = Number(game.winningAmount) || 0;
+      user.winningAmount = String(oldAmount + addAmount);
+      await user.save();
+    }
 
     return {
       status: statusCode.SUCCESS,
@@ -963,5 +967,3 @@ exports.decideGame = async (gameId, winnerId) => {
     };
   }
 };
-
-
