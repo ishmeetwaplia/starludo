@@ -848,4 +848,60 @@ exports.approveWithdraw = async (withdrawId, status) => {
   };
 };
 
+exports.getFilteredGames = async (query) => {
+  try {
+    const {
+      adminstatus,
+      search,
+      page = 1,
+      limit = 10
+    } = query;
+
+    const filter = {
+      status: { $in: ["completed", "quit"] },
+    };
+
+    if (adminstatus) filter.adminstatus = adminstatus;
+
+    const userFilter = search
+      ? { username: { $regex: search, $options: "i" } }
+      : {};
+
+    const skip = (page - 1) * limit;
+
+    const games = await Game.find(filter)
+      .populate({
+        path: "createdBy acceptedBy",
+        select: "username",
+        match: userFilter
+      })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Game.countDocuments(filter);
+
+    return {
+      status: statusCode.SUCCESS,
+      success: true,
+      message: "Games fetched successfully",
+      data: games,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+  } catch (error) {
+    console.error("Error in getFilteredGames:", error);
+    return {
+      status: statusCode.SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+
 

@@ -16,7 +16,8 @@ const {
   getAllPaymentsSchema,
   approvePaymentSchema,
   getAllWithdrawsSchema,
-  approveWithdrawSchema
+  approveWithdrawSchema,
+  getFilteredGamesSchema,
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -49,6 +50,8 @@ router.get( "/users/:id/withdraws", protect, responseHandler(adminController.get
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));
+router.get( "/games-compleated", protect, validate(getFilteredGamesSchema), responseHandler(adminController.getFilteredGames));
+
 
 //Admin -> payments 
 router.get("/payments", protect, validate(getAllPaymentsSchema, "query"), responseHandler(adminController.getAllPayments));

@@ -118,6 +118,12 @@ const approveWithdrawSchema = Joi.object({
   status: Joi.string().valid('paid', 'rejected').required()
 });
 
+const getFilteredGamesSchema = Joi.object({
+  adminstatus: Joi.string().valid("pending", "approved", "rejected").optional(),
+  search: Joi.string().optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
 
 module.exports = {
   loginSchema,
@@ -135,4 +141,5 @@ module.exports = {
   withdrawValidation,
   getAllWithdrawsSchema,
   approveWithdrawSchema,
+  getFilteredGamesSchema,
 };

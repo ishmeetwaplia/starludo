@@ -107,3 +107,8 @@ exports.approveWithdraw = async (req) => {
   const result = await adminService.approveWithdraw(id, status);
   return result;
 };
+
+exports.getFilteredGames = async (req, res) => {
+  const result = await adminService.getFilteredGames(req.query);
+  return result;
+};
