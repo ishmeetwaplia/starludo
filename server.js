@@ -14,7 +14,8 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "https://sta-ludo-mgvh.vercel.app",
-    "https://stat-ludo-admin.vercel.app"
+    "https://stat-ludo-admin.vercel.app",
+    "https://indianludoking.com"
 ];
 
 app.use(express.json());
