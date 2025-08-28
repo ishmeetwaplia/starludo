@@ -17,6 +17,15 @@ exports.register = async (req) => {
       };
     }
 
+    let existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Username is already taken, please choose another one",
+      };
+    }
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
