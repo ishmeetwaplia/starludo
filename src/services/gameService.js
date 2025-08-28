@@ -1,6 +1,7 @@
 const { statusCode  , resMessage} = require("../config/constant");
 const Game = require("../models/Game");
 const User = require("../models/User");
+const path = require("path");
 
 exports.createBet = async (req) => {
   try {
@@ -22,6 +23,19 @@ exports.createBet = async (req) => {
         status: statusCode.BAD_REQUEST,
         success: false,
         message: "Insufficient credit to place this bet"
+      };
+    }
+
+    const existingGame = await Game.findOne({
+      createdBy: _id,
+      status: { $in: ["pending", "requested" ,"started"] }
+    });
+
+    if (existingGame) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "You already have an active bet. Please complete or cancel it before creating a new one."
       };
     }
 
@@ -54,7 +68,11 @@ exports.submitWinning = async (req) => {
     const { gameId, result } = req.body;
     const file = req.file;
 
-    const game = await Game.findById(gameId);
+    let game = await Game.findById(gameId)
+      .populate("createdBy", "username")
+      .populate("acceptedBy", "username")
+      .populate("winningScreenshots.user", "username");
+
     if (!game) {
       return {
         status: statusCode.NOT_FOUND,
@@ -72,20 +90,50 @@ exports.submitWinning = async (req) => {
         };
       }
 
-      game.winner = _id;
-      game.status = "completed";
-      game.winningScreenshot = file.path;
+      if (!game.winningScreenshots) {
+        game.winningScreenshots = [];
+      }
+
+      const relativePath = path.join("uploads", "winnings", file.filename);
+
+      game.winningScreenshots.push({
+        user: _id,
+        screenshot: relativePath
+      });
+
+      game.winningScreenshot = relativePath; 
+      game.status = "completed"; 
       await game.save();
 
+      // repopulate after save
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username")
+        .populate("winningScreenshots.user", "username");
+
+      // ✅ Transform game object for socket
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null,
+        winningScreenshots: game.winningScreenshots.map(ws => ({
+          _id: ws._id,
+          username: ws.user?.username || null,
+          screenshot: ws.screenshot
+        }))
+      };
+
       if (global.io) {
-        global.io.emit("game_over", game);
+        global.io.emit("game_over", socketGame);
       }
 
       return {
         status: statusCode.OK,
         success: true,
         message: resMessage.WINNING_SUBMITTED || "Winning submitted successfully",
-        data: game
+        data: socketGame
       };
     }
 
@@ -94,22 +142,63 @@ exports.submitWinning = async (req) => {
       game.status = "completed";
       await game.save();
 
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username");
+
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null
+      };
+
       if (global.io) {
-        global.io.emit("game_over", game);
+        global.io.emit("game_over", socketGame);
       }
 
       return {
         status: statusCode.OK,
         success: true,
         message: resMessage.GAME_MARKED_LOST || "Game marked as lost",
-        data: game
+        data: socketGame
+      };
+    }
+
+    if (result === "cancel") {
+      game.status = "quit";
+      game.loser = _id;
+      await game.save();
+
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username");
+
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null
+      };
+
+      if (global.io) {
+        global.io.emit("game_over", socketGame);
+      }
+
+      return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.GAME_QUIT || "Game has been quit",
+        data: socketGame
       };
     }
 
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
-      message: "Invalid result value. Allowed: 'won' or 'lost'"
+      message: "Invalid result value. Allowed: 'won', 'lost', or 'cancel'"
     };
 
   } catch (error) {

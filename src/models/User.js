@@ -78,11 +78,24 @@ const UserSchema = new mongoose.Schema({
   isBanned: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
   fullName: { type: String },
+  playingAmount: {
+    type: Number,
+    default: 0
+  },
+  updateUsername: {
+    type: Boolean,
+    default: true
+  },
   role: {
     type: String,
     enum: ["user", "admin"],
     default: "user"
-  }
+  },
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("User", UserSchema);

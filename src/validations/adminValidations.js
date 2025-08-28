@@ -81,6 +81,43 @@ const approvePaymentSchema = Joi.object({
   status: Joi.string().valid("approved", "rejected").required()
 });
 
+const paymentValidation = {
+  getUserPayments: {
+    query: Joi.object({
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).max(100).default(10),
+      minAmount: Joi.number().min(0),
+      maxAmount: Joi.number().min(0),
+      status: Joi.string().valid("pending", "approved", "rejected"),
+    }),
+  },
+};
+
+const withdrawValidation = {
+  getUserWithdraws: {
+    query: Joi.object({
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).max(100).default(10),
+      minAmount: Joi.number().min(0),
+      maxAmount: Joi.number().min(0),
+      status: Joi.string().valid("unpaid", "paid", "rejected"),
+    }),
+  },
+};
+
+const getAllWithdrawsSchema = Joi.object({
+  status: Joi.string()
+    .valid("unpaid", "paid", "rejected")
+    .optional(),
+  search: Joi.string().trim().optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
+const approveWithdrawSchema = Joi.object({
+  status: Joi.string().valid('paid', 'rejected').required()
+});
+
 
 module.exports = {
   loginSchema,
@@ -94,4 +131,8 @@ module.exports = {
   updateScannerOrUpiSchema,
   getAllPaymentsSchema,
   approvePaymentSchema,
+  paymentValidation,
+  withdrawValidation,
+  getAllWithdrawsSchema,
+  approveWithdrawSchema,
 };

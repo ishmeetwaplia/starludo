@@ -6,6 +6,7 @@ const { statusCode, resMessage } = require("../config/constant");
 const fs = require("fs");
 const path = require("path");
 const Payment = require("../models/Payment");
+const Withdraw = require("../models/Withdraw")
 
 exports.login = async ({ email, password }) => {
   try {
@@ -263,8 +264,9 @@ exports.getAllUsers = async (query) => {
 
     const filter = {};
 
-    if (isActive !== undefined) filter.isActive = isActive === "true";
-    if (isBanned !== undefined) filter.isBanned = isBanned === "true";
+    filter.role = "user";
+    if (isActive !== undefined) filter.isActive = isActive === "true"; 
+    if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
 
     if (search) {
       filter.$or = [
@@ -764,3 +766,173 @@ exports.approvePayment = async (paymentId, status) => {
     payment
   };
 };
+
+exports.getUserPayments = async (userId, query) => {
+  try {
+    const { status, minAmount, maxAmount, page = 1, limit = 10 } = query;
+
+    const filter = { userId };
+    if (status) filter.status = status;
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const payments = await Payment.find(filter)
+      .populate("userId", "_id username phone credit")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Payment.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User payments fetched successfully",
+      data: {
+        items: payments,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.getUserWithdraws = async (userId, query) => {
+  try {
+    const { status, minAmount, maxAmount, page = 1, limit = 10 } = query;
+
+    const filter = { userId };
+    if (status) filter.status = status;
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    const skip = (page - 1) * limit;
+
+    const withdraws = await Withdraw.find(filter)
+      .populate("userId", "_id username phone credit")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+
+    const total = await Withdraw.countDocuments(filter);
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "User withdraws fetched successfully",
+      data: {
+        items: withdraws,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.getAllWithdraws = async (query) => {
+  try {
+    const { status, search, minAmount, maxAmount, page = 1, limit = 10 } = query;
+
+    const filter = {};
+    if (status) filter.status = status;
+
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
+    let withdraws = await Withdraw.find(filter)
+      .populate('userId', '_id username phone credit')
+      .sort({ createdAt: -1 });
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      withdraws = withdraws.filter(
+        (w) =>
+          w.userId?.username?.toLowerCase().includes(searchLower) ||
+          w.userId?.phone?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const total = withdraws.length;
+    const skip = (page - 1) * limit;
+    withdraws = withdraws.slice(skip, skip + Number(limit));
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: 'Withdraw requests fetched successfully',
+      data: {
+        withdraws,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+exports.approveWithdraw = async (withdrawId, status) => {
+  if (!["paid", "rejected"].includes(status)) {
+    throw new Error("Invalid status. Only 'paid' or 'rejected' allowed.");
+  }
+
+  const withdraw = await Withdraw.findById(withdrawId);
+  if (!withdraw) {
+    throw new Error("Withdraw request not found");
+  }
+
+  if (withdraw.status !== "unpaid") {
+    throw new Error("Withdraw is already processed");
+  }
+
+  withdraw.status = status;
+  await withdraw.save();
+
+  if (status === "paid") {
+    const user = await User.findById(withdraw.userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.credit = (user.credit || 0) - withdraw.amount;
+    if (user.credit < 0) user.credit = 0; 
+    await user.save();
+  }
+
+  return {
+    message: `Withdraw has been ${status}`,
+    withdraw
+  };
+};
+
+

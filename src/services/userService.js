@@ -56,19 +56,29 @@ exports.logout = async (req, res) => {
 };
 
 exports.updateProfile = async (req) => {
-    try {
-        const { _id } = req.auth;
-        const { username } = req.body;
-        const userInfo = await User.findById(_id);
-        if(!userInfo) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.User_not_found
-            };
-        }
-        userInfo.username = username;
-        await userInfo.save();
+  try {
+    const { _id } = req.auth;
+    const { username } = req.body;
+    const userInfo = await User.findById(_id);
+    if (!userInfo) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found
+      };
+    }
+
+    if (!username || !userInfo.updateUsername) {
+       return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "Username can't be updated."
+        };
+    }
+    userInfo.username = username;
+    userInfo.updateUsername = false;
+
+    await userInfo.save();
 
         return {
             status: statusCode.OK,
@@ -232,10 +242,8 @@ exports.createWithdraw = async (req) => {
     }
 
     const maxWithdrawable =
-      Number(user.winningAmount) +
-      Number(user.referralEarning) -
-      Number(user.penalty) +
-      Number(user.credit);
+      Number(user.winningAmount) -
+      Number(user.penalty)
 
     if (amount > maxWithdrawable) {
       return {

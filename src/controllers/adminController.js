@@ -85,3 +85,25 @@ exports.approvePayment = async (req) => {
   const result = await adminService.approvePayment(id, status);
   return result;
 };
+
+exports.getUserPayments = async (req) => {
+  const result = await adminService.getUserPayments(req.params.id, req.query);
+  return result;
+};
+
+exports.getUserWithdraws = async (req) => {
+  const result = await adminService.getUserWithdraws(req.params.id, req.query);
+  return result;
+};
+
+exports.getAllWithdraws = async (req) => {
+  const result = await adminService.getAllWithdraws(req.query);
+  return result;
+};
+
+exports.approveWithdraw = async (req) => {
+  const { id } = req.params;
+  const { status } = req.body; 
+  const result = await adminService.approveWithdraw(id, status);
+  return result;
+};

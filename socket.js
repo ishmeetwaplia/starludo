@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const Game = require("./src/models/Game");
 const Payment = require("./src/models/Payment");
+const User = require("./src/models/User");
 
 function initSocket(server) {
   const io = new Server(server, {
@@ -65,6 +66,50 @@ function initSocket(server) {
 
       } catch (error) {
         console.error("Error in live game expiration loop:", error);
+      }
+    }, 1000);
+
+    setInterval(async () => {
+      try {
+
+        const games = await Game.find({ status: "started" })
+          .populate("createdBy", "username credit")
+          .populate("acceptedBy", "username credit");
+
+
+        for (const game of games) {
+          const inactiveTime = Date.now() - new Date(game.updatedAt).getTime();
+
+          if (inactiveTime > 20 * 60 * 1000) {
+
+            game.status = "cancelled";
+            await game.save();
+
+            const creatorId = game.createdBy?._id?.toString();
+            const accepterId = game.acceptedBy?._id?.toString();
+
+            const creatorSocketId = creatorId ? userSocketMap[creatorId] : null;
+            const accepterSocketId = accepterId ? userSocketMap[accepterId] : null;
+
+            if (creatorSocketId) {
+              io.to(creatorSocketId).emit("game_over", {
+                gameId: game._id,
+                status: game.status,
+                message: "Game cancelled due to inactivity",
+              });
+            }
+
+            if (accepterSocketId) {
+              io.to(accepterSocketId).emit("game_over", {
+                gameId: game._id,
+                status: game.status,
+                message: "Game cancelled due to inactivity",
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error in inactive game cancel loop:", error);
       }
     }, 1000);
 
@@ -137,7 +182,9 @@ function initSocket(server) {
 
     socket.on("start_game", async (gameId) => {
       try {
-        const game = await Game.findById(gameId).populate("acceptedBy", "_id username");
+        const game = await Game.findById(gameId)
+          .populate("createdBy", "_id username credit ")
+          .populate("acceptedBy", "_id username credit ");
 
         if (!game || !game.acceptedBy) return;
 
@@ -152,6 +199,16 @@ function initSocket(server) {
           });
         }
 
+        const betAmount = game.betAmount;
+        await Promise.all([
+          User.findByIdAndUpdate(game.createdBy._id, {
+            $inc: { credit: -betAmount }
+          }),
+          User.findByIdAndUpdate(game.acceptedBy._id, {
+            $inc: { credit: -betAmount }
+          })
+        ]);
+
         await Game.findByIdAndUpdate(gameId, { status: "started" });
 
         const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
@@ -161,7 +218,7 @@ function initSocket(server) {
         io.emit("live_games", liveGames);
 
       } catch (error) {
-        console.error("Error canceling game request:", error);
+        console.error("Error starting game:", error);
       }
     });
 
