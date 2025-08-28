@@ -19,7 +19,11 @@ exports.protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      return res.status(401).json({ success: false, message: "Token failed" });
+      return res.status(401).json({ 
+        status: 401,
+        success: false,
+        message: "Token failed"
+      });
     }
   }
 

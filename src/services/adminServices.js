@@ -18,7 +18,7 @@ exports.login = async ({ email, password }) => {
       };
     }
     const isMatch = await bcrypt.compare(password, admin.password);
-    
+
     if (!isMatch) {
       return {
         status: statusCode.UNAUTHORIZED,
@@ -62,11 +62,98 @@ exports.getDashboard = async (adminId) => {
       };
     }
 
+    const totalUsers = await User.aggregate([
+      {
+        $match: { isActive: true }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          totalUsers: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          dayNumber: "$_id",
+          totalUsers: 1
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          data: { $push: { dayNumber: "$dayNumber", totalUsers: "$totalUsers" } }
+        }
+      },
+      {
+        $project: {
+          weekdays: {
+            $map: {
+              input: [1, 2, 3, 4, 5, 6, 7],
+              as: "d",
+              in: {
+                dayNumber: "$$d",
+                totalUsers: {
+                  $let: {
+                    vars: {
+                      match: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$data",
+                              as: "x",
+                              cond: { $eq: ["$$x.dayNumber", "$$d"] }
+                            }
+                          },
+                          0
+                        ]
+                      }
+                    },
+                    in: { $ifNull: ["$$match.totalUsers", 0] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      { $unwind: "$weekdays" },
+      {
+        $addFields: {
+          weekday: {
+            $switch: {
+              branches: [
+                { case: { $eq: ["$weekdays.dayNumber", 1] }, then: "Sunday" },
+                { case: { $eq: ["$weekdays.dayNumber", 2] }, then: "Monday" },
+                { case: { $eq: ["$weekdays.dayNumber", 3] }, then: "Tuesday" },
+                { case: { $eq: ["$weekdays.dayNumber", 4] }, then: "Wednesday" },
+                { case: { $eq: ["$weekdays.dayNumber", 5] }, then: "Thursday" },
+                { case: { $eq: ["$weekdays.dayNumber", 6] }, then: "Friday" },
+                { case: { $eq: ["$weekdays.dayNumber", 7] }, then: "Saturday" }
+              ],
+              default: "Unknown"
+            }
+          },
+          totalUsers: "$weekdays.totalUsers"
+        }
+      },
+      {
+        $project: {
+          weekday: 1,
+          totalUsers: 1,
+          _id: 0
+        }
+      }
+    ]);
+
     return {
       success: true,
       status: statusCode.OK,
       message: resMessage.DASHBOARD_FETCHED,
-      data: admin
+      data: {
+        admin,
+        totalUsersByWeekday: totalUsers
+      }
     };
   } catch (error) {
     return {
@@ -176,8 +263,8 @@ exports.getAllUsers = async (query) => {
 
     const filter = {};
 
-    if (isActive !== undefined) filter.isActive = isActive === "true"; 
-    if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
+    if (isActive !== undefined) filter.isActive = isActive === "true";
+    if (isBanned !== undefined) filter.isBanned = isBanned === "true";
 
     if (search) {
       filter.$or = [
@@ -353,7 +440,7 @@ exports.getAllGames = async (query) => {
       betAmountMax,
       winningAmountMin,
       winningAmountMax,
-      search, 
+      search,
       page = 1,
       limit = 10,
     } = query;
@@ -389,7 +476,7 @@ exports.getAllGames = async (query) => {
       );
     }
 
-    const total = games.length; 
+    const total = games.length;
 
     // Apply pagination AFTER search
     const skip = (page - 1) * limit;
@@ -496,7 +583,7 @@ exports.getUserGameStats = async (userId, query) => {
     // Pre-calculate all counts
     const createdCount = await Game.countDocuments({ createdBy: userId });
     const acceptedCount = await Game.countDocuments({ acceptedBy: userId });
-    const playedCount = await Game.countDocuments({ 
+    const playedCount = await Game.countDocuments({
       $or: [{ createdBy: userId }, { acceptedBy: userId }]
     });
     const wonCount = await Game.countDocuments({ winner: userId });
