@@ -99,7 +99,7 @@ exports.verifyOTP = async (req, res) => {
 
 exports.password = async (req, res) => {
   try {
-    const { phone, password, confirmPassword } = req.body;
+    const { phone, password, confirmPassword, referCode } = req.body;
     if (password !== confirmPassword) {
       return {
         status: statusCode.BAD_REQUEST,
@@ -117,6 +117,15 @@ exports.password = async (req, res) => {
       }
     }
 
+    const existingRefer = await User.findOne({ referCode });
+    if (referCode && !existingRefer) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Invalid_refer_code,
+      }
+    }
+
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
     user.isRegistered = true;
@@ -125,6 +134,7 @@ exports.password = async (req, res) => {
       expiresIn: "7d",
     });
     
+    user.referBy = existingRefer ? existingRefer._id : null;
     user.token = token;
     user.username = FUNC.generateUsername();
     user.referCode = FUNC.generateOTP();

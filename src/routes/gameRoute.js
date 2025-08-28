@@ -10,5 +10,6 @@ const router = express.Router();
 
 router.post("/bet", verifyToken, validate(validation.createBet), responseHandler(controller.createBetController));
 router.post("/submit-winning", verifyToken, uploadWinning.single("screenshot"), validate(validation.submitWinning), responseHandler(controller.submitWinningController));
+router.get("/history", verifyToken, responseHandler(controller.getUserGameHistoryController));
 
 module.exports = router;

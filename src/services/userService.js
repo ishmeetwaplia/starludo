@@ -290,3 +290,25 @@ exports.createWithdraw = async (req) => {
     };
   }
 };
+
+exports.withdrawHistory = async (req) => {
+  try {
+    const { _id } = req.auth;
+
+    const history = await Withdraw.find({ userId: _id })
+      .sort({ createdAt: -1 });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Withdraw history fetched successfully",
+      data: history
+    }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+}

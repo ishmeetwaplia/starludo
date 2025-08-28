@@ -209,3 +209,27 @@ exports.submitWinning = async (req) => {
     };
   }
 };
+
+exports.getUserGameHistory = async (req) => {
+  try {
+    const { _id } = req.auth;
+
+    const history = await Game.find({
+      $or: [
+        { createdBy: _id },
+        { acceptedBy: _id },
+        { winner: _id },
+        { loser: _id }
+      ]
+    }).sort({ createdAt: -1 });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "User game history retrieved successfully",
+      data: history
+    };
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

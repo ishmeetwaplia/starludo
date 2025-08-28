@@ -84,3 +84,15 @@ exports.createWithdrawController = async (req) => {
     };
   }
 };
+
+exports.withdrawHistoryController = async (req) => {
+  try {
+    return await service.withdrawHistory(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};

@@ -6,7 +6,11 @@ const Withdraw = require("./src/models/Withdraw")
 
 function initSocket(server) {
   const io = new Server(server, {
-    cors: { origin: "http://localhost:3000" },
+    path: "/api/socket.io",
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
   });
 
   const userSocketMap = {};
