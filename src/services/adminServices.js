@@ -935,4 +935,122 @@ exports.approveWithdraw = async (withdrawId, status) => {
   };
 };
 
+exports.getFilteredGames = async (query) => {
+  try {
+    const {
+      adminstatus,
+      search,
+      page = 1,
+      limit = 10
+    } = query;
 
+    const filter = {
+      status: { $in: ["completed", "quit"] },
+    };
+
+    if (adminstatus) filter.adminstatus = adminstatus;
+
+    const userFilter = search
+      ? { username: { $regex: search, $options: "i" } }
+      : {};
+
+    const skip = (page - 1) * limit;
+
+    const games = await Game.find(filter)
+      .populate({
+        path: "createdBy acceptedBy",
+        select: "username",
+        match: userFilter
+      })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Game.countDocuments(filter);
+
+    return {
+      status: statusCode.SUCCESS,
+      success: true,
+      message: "Games fetched successfully",
+      data: games,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit),
+      }
+    };
+  } catch (error) {
+    console.error("Error in getFilteredGames:", error);
+    return {
+      status: statusCode.SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
+
+exports.decideGame = async (gameId, winnerId) => {
+  try {
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: "Game not found"
+      };
+    }
+
+    if (game.adminstatus === "decided") {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Game has already been decided"
+      };
+    }
+
+    if (
+      String(game.createdBy) !== String(winnerId) &&
+      String(game.acceptedBy) !== String(winnerId)
+    ) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Winner must be one of the players in this game"
+      };
+    }
+
+    const loserId =
+      String(game.createdBy) === String(winnerId)
+        ? game.acceptedBy
+        : game.createdBy;
+
+    game.winner = winnerId;
+    game.loser = loserId;
+    game.adminstatus = "decided";
+    game.status = "completed"; 
+    await game.save();
+
+    const user = await User.findById(winnerId);
+    if (user) {
+      const oldAmount = Number(user.winningAmount) || 0;
+      const addAmount = Number(game.winningAmount) || 0;
+      user.winningAmount = String(oldAmount + addAmount);
+      await user.save();
+    }
+
+    return {
+      status: statusCode.SUCCESS,
+      success: true,
+      message: "Game decided successfully",
+      data: game
+    };
+  } catch (error) {
+    console.error("Error in decideGame:", error);
+    return {
+      status: statusCode.SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
