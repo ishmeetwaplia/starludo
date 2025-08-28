@@ -216,6 +216,16 @@ function initSocket(server) {
 
         await Game.findByIdAndUpdate(gameId, { status: "started" });
 
+        // const totalPot = betAmount * 2;
+        // const adminCommission = totalPot - game.winningAmount;
+
+        // if (adminCommission > 0) {
+        //   await User.findOneAndUpdate(
+        //     { role: "admin" },
+        //     { $inc: { earning: adminCommission } }
+        //   );
+        // }
+
         const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
         io.emit("games_list", updatedGames);
 
