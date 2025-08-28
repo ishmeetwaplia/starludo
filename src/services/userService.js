@@ -272,6 +272,10 @@ exports.createWithdraw = async (req) => {
 
     await withdraw.save();
 
+    if (global.io) {
+      global.io.emit("new_withdraw", withdraw);
+    }
+
     return {
       status: statusCode.OK,
       success: true,
