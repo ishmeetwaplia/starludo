@@ -247,6 +247,56 @@ function initSocket(server) {
       }
     });
 
+    socket.on("admin_winner_decision", async ({ gameId, winner }) => {
+      try {
+
+        const game = await Game.findById(gameId)
+          .populate("createdBy", "_id username")
+          .populate("acceptedBy", "_id username");
+
+        if (!game) {
+          return socket.emit("error_message", { message: "Game not found" });
+        }
+
+        if (game.adminstatus === "decided") {
+          return socket.emit("error_message", { message: "Game has already been decided" });
+        }
+
+        if (
+          String(game.createdBy._id) !== String(winner) &&
+          String(game.acceptedBy._id) !== String(winner)
+        ) {
+          return socket.emit("error_message", { message: "Winner must be one of the players in this game" });
+        }
+
+        const loserId =
+          String(game.createdBy._id) === String(winner)
+            ? game.acceptedBy._id
+            : game.createdBy._id;
+
+        game.winner = winner;
+        game.loser = loserId;
+        game.adminstatus = "decided";
+        game.status = "completed";
+        await game.save();
+
+        const user = await User.findById(winner);
+        if (user) {
+          const oldAmount = Number(user.winningAmount) || 0;
+          const addAmount = Number(game.winningAmount) || 0;
+          const newAmount = oldAmount + addAmount;
+
+          user.winningAmount = String(newAmount);
+          await user.save();
+        } else {
+          console.log("⚠️ Winner user not found in DB:", winner);
+        }
+
+      } catch (error) {
+        console.error("❌ Error in admin_winner_decision:", error);
+      }
+    });
+
     socket.on("disconnect", async () => {
       if (socket.userId) {
         delete userSocketMap[socket.userId];
