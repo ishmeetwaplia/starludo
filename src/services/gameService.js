@@ -68,7 +68,11 @@ exports.submitWinning = async (req) => {
     const { gameId, result } = req.body;
     const file = req.file;
 
-    const game = await Game.findById(gameId);
+    let game = await Game.findById(gameId)
+      .populate("createdBy", "username")
+      .populate("acceptedBy", "username")
+      .populate("winningScreenshots.user", "username");
+
     if (!game) {
       return {
         status: statusCode.NOT_FOUND,
@@ -98,19 +102,38 @@ exports.submitWinning = async (req) => {
       });
 
       game.winningScreenshot = relativePath; 
-
       game.status = "completed"; 
       await game.save();
 
+      // repopulate after save
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username")
+        .populate("winningScreenshots.user", "username");
+
+      // ✅ Transform game object for socket
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null,
+        winningScreenshots: game.winningScreenshots.map(ws => ({
+          _id: ws._id,
+          username: ws.user?.username || null,
+          screenshot: ws.screenshot
+        }))
+      };
+
       if (global.io) {
-        global.io.emit("game_over", game);
+        global.io.emit("game_over", socketGame);
       }
 
       return {
         status: statusCode.OK,
         success: true,
         message: resMessage.WINNING_SUBMITTED || "Winning submitted successfully",
-        data: game
+        data: socketGame
       };
     }
 
@@ -119,15 +142,27 @@ exports.submitWinning = async (req) => {
       game.status = "completed";
       await game.save();
 
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username");
+
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null
+      };
+
       if (global.io) {
-        global.io.emit("game_over", game);
+        global.io.emit("game_over", socketGame);
       }
 
       return {
         status: statusCode.OK,
         success: true,
         message: resMessage.GAME_MARKED_LOST || "Game marked as lost",
-        data: game
+        data: socketGame
       };
     }
 
@@ -136,15 +171,27 @@ exports.submitWinning = async (req) => {
       game.loser = _id;
       await game.save();
 
+      game = await Game.findById(gameId)
+        .populate("createdBy", "username")
+        .populate("acceptedBy", "username");
+
+      const socketGame = {
+        ...game.toObject(),
+        createdBy: game.createdBy?._id,
+        acceptedBy: game.acceptedBy?._id,
+        createdByUsername: game.createdBy?.username || null,
+        acceptedByUsername: game.acceptedBy?.username || null
+      };
+
       if (global.io) {
-        global.io.emit("game_over", game);
+        global.io.emit("game_over", socketGame);
       }
 
       return {
         status: statusCode.OK,
         success: true,
         message: resMessage.GAME_QUIT || "Game has been quit",
-        data: game
+        data: socketGame
       };
     }
 
