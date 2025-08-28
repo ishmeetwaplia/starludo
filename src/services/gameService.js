@@ -1,6 +1,7 @@
 const { statusCode  , resMessage} = require("../config/constant");
 const Game = require("../models/Game");
 const User = require("../models/User");
+const path = require("path");
 
 exports.createBet = async (req) => {
   try {
@@ -85,9 +86,20 @@ exports.submitWinning = async (req) => {
         };
       }
 
-      // game.winner = _id;
-      game.status = "completed";
-      game.winningScreenshot = file.path;
+      if (!game.winningScreenshots) {
+        game.winningScreenshots = [];
+      }
+
+      const relativePath = path.join("uploads", "winnings", file.filename);
+
+      game.winningScreenshots.push({
+        user: _id,
+        screenshot: relativePath
+      });
+
+      game.winningScreenshot = relativePath; 
+
+      game.status = "completed"; 
       await game.save();
 
       if (global.io) {
@@ -121,7 +133,7 @@ exports.submitWinning = async (req) => {
 
     if (result === "cancel") {
       game.status = "quit";
-       game.loser = _id;
+      game.loser = _id;
       await game.save();
 
       if (global.io) {

@@ -46,7 +46,17 @@ const GameSchema = new mongoose.Schema({
   },
   roomId: {   
     type: String
+  },
+  winningScreenshots: [
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    screenshot: String
   }
+]
+
 }, { timestamps: true, versionKey: false });
 
 module.exports = mongoose.model("Game", GameSchema);
