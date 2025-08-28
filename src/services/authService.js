@@ -173,3 +173,62 @@ exports.resendOTP = async (req) => {
     };
   }
 };
+
+exports.login = async (req) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username }).select("+password");
+    if (!user) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.User_not_found || "User not found",
+      };
+    }
+
+    if (!user.isRegistered) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "User is not registered yet",
+      };
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Invalid_credentials || "Invalid username or password",
+      };
+    }
+
+    const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    user.token = token;
+    await user.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Login_success || "Login successful",
+      data: {
+        token,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+        },
+      },
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};
