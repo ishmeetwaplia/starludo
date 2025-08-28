@@ -24,3 +24,15 @@ exports.submitWinningController = async (req) => {
     };
   }
 };
+
+exports.getUserGameHistoryController = async (req) => {
+  try {
+    return await service.getUserGameHistory(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
