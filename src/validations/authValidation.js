@@ -12,6 +12,40 @@ exports.sendOTP = Joi.object({
     }),
 });
 
+exports.register = Joi.object({
+  phone: Joi.string()
+    .trim()
+    .pattern(/^[0-9]+$/)
+    .required()
+    .messages({
+      "any.required": "Phone is required",
+      "string.pattern.base": "Phone can only contain numbers",
+      "string.empty": "Phone cannot be empty",
+    }),
+
+  username: Joi.string()
+    .trim()
+    .min(3)
+    .max(30)
+    .required()
+    .messages({
+      "any.required": "Username is required",
+      "string.empty": "Username cannot be empty",
+      "string.min": "Username must be at least 3 characters long",
+      "string.max": "Username must not be longer than 30 characters",
+    }),
+
+  password: Joi.string()
+    .trim()
+    .min(6)
+    .required()
+    .messages({
+      "any.required": "Password is required",
+      "string.empty": "Password cannot be empty",
+      "string.min": "Password must be at least 6 characters long",
+    }),
+});
+
 exports.verifyOTP = Joi.object({
   phone: Joi.string()
     .trim()
@@ -63,14 +97,17 @@ exports.password = Joi.object({
       "string.min": "Password must be at least 6 characters long",
       "string.empty": "Password cannot be empty",
     }),
-  referCode: Joi.string()
-    .trim()
-    .min(6)
-    .allow("", null)
-    .optional()
-    .messages({
-      "any.required": "Refer code is required",
-      "string.min": "Refer code must be at least 6 characters long",
-      "string.empty": "Refer code cannot be empty",
-    }),
 });
+
+exports.login = Joi.object({
+  username: Joi.string().trim().required().messages({
+    "any.required": "Username is required",
+    "string.empty": "Username cannot be empty",
+  }),
+  password: Joi.string().min(6).required().messages({
+    "any.required": "Password is required",
+    "string.min": "Password must be at least 6 characters",
+    "string.empty": "Password cannot be empty",
+  }),
+});
+

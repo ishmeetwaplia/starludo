@@ -1,9 +1,9 @@
 const service = require('../services/authService');
 const { statusCode } = require('../config/constant');
 
-exports.sendOTPController = async (req) => {
+exports.registerController = async (req) => {
     try {
-        return await service.sendOTP(req);
+        return await service.register(req);
     } catch (error) {
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
@@ -11,7 +11,7 @@ exports.sendOTPController = async (req) => {
             message: error.message,
         };
     }
-}
+};
 
 exports.verifyOTPController = async (req) => {
     try {
@@ -23,7 +23,7 @@ exports.verifyOTPController = async (req) => {
             message: error.message,
         };
     }
-}
+};
 
 exports.passwordController = async (req) => {
     try {
@@ -35,7 +35,7 @@ exports.passwordController = async (req) => {
             message: error.message,
         };
     }
-}
+};
 
 exports.resendOTPController = async (req) => {
     try {
@@ -47,4 +47,16 @@ exports.resendOTPController = async (req) => {
             message: error.message,
         };
     }
-}
+};
+
+exports.loginController = async (req) => {
+    try {
+        return await service.login(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+};
