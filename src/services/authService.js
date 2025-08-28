@@ -4,31 +4,41 @@ const User = require("../models/User");
 const { statusCode, resMessage } = require('../config/constant');
 const FUNC = require('../functions/function');
 
-exports.sendOTP = async (req) => {
+exports.register = async (req) => {
   try {
-    const { phone } = req.body;
+    const { phone, username, password } = req.body;
 
     let user = await User.findOne({ phone });
-    if (!user) user = new User({ phone });
+    if (user) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "User already exists with this phone number",
+      };
+    }
 
-    const otp = "123456"
-    user.otp = otp;
-    user.otpExpire = Date.now() + 5 * 60 * 1000;
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({
+      phone,
+      username,
+      password: hashedPassword,
+      isRegistered: true,
+    });
 
     await user.save();
-
-    console.log(`OTP for ${phone} is ${otp}`);
 
     return {
       status: statusCode.OK,
       success: true,
-      message: resMessage.OTP_SENT,
-    }
+      message: "User registered successfully",
+    };
   } catch (error) {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: error.message
+      message: error.message,
     };
   }
 };

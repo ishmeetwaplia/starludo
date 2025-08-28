@@ -1,9 +1,9 @@
 const service = require('../services/authService');
 const { statusCode } = require('../config/constant');
 
-exports.sendOTPController = async (req) => {
+exports.registerController = async (req) => {
     try {
-        return await service.sendOTP(req);
+        return await service.register(req);
     } catch (error) {
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
