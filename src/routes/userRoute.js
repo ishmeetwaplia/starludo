@@ -14,5 +14,6 @@ router.post("/credit", verifyToken, validate(credit), responseHandler(controller
 router.get("/credit", verifyToken, responseHandler(controller.getCreditController));
 router.get("/payments", verifyToken, responseHandler(controller.getUserPaymentsController));
 router.post("/withdraw", verifyToken, responseHandler(controller.createWithdrawController));
+router.get("/withdraw-history", verifyToken, responseHandler(controller.withdrawHistoryController));
 
 module.exports = router;
