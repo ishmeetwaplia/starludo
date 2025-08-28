@@ -903,5 +903,65 @@ exports.getFilteredGames = async (query) => {
   }
 };
 
+exports.decideGame = async (gameId, winnerId) => {
+  try {
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: "Game not found"
+      };
+    }
+
+    if (game.adminstatus === "decided") {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Game has already been decided"
+      };
+    }
+
+    if (
+      String(game.createdBy) !== String(winnerId) &&
+      String(game.acceptedBy) !== String(winnerId)
+    ) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Winner must be one of the players in this game"
+      };
+    }
+
+    const loserId =
+      String(game.createdBy) === String(winnerId)
+        ? game.acceptedBy
+        : game.createdBy;
+
+    game.winner = winnerId;
+    game.loser = loserId;
+    game.adminstatus = "decided";
+    game.status = "completed"; 
+    await game.save();
+
+    await User.findByIdAndUpdate(winnerId, {
+      $inc: { winningAmount: game.winningAmount }
+    });
+
+    return {
+      status: statusCode.SUCCESS,
+      success: true,
+      message: "Game decided successfully",
+      data: game
+    };
+  } catch (error) {
+    console.error("Error in decideGame:", error);
+    return {
+      status: statusCode.SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};
 
 

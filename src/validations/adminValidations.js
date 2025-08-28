@@ -125,6 +125,15 @@ const getFilteredGamesSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const decideGameSchema = Joi.object({
+  gameId: Joi.string().required().messages({
+    "any.required": "Game ID is required"
+  }),
+  winnerId: Joi.string().required().messages({
+    "any.required": "Winner user ID is required"
+  })
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -142,4 +151,5 @@ module.exports = {
   getAllWithdrawsSchema,
   approveWithdrawSchema,
   getFilteredGamesSchema,
+  decideGameSchema,
 };
