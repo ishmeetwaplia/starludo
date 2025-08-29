@@ -2,241 +2,183 @@ const { Server } = require("socket.io");
 const Game = require("./src/models/Game");
 const Payment = require("./src/models/Payment");
 const User = require("./src/models/User");
-const Withdraw = require("./src/models/Withdraw")
+const Withdraw = require("./src/models/Withdraw");
 
 function initSocket(server) {
   const io = new Server(server, {
     path: "/api/socket.io",
     cors: {
       origin: "*",
-      methods: ["GET", "POST"]
-    }
+      methods: ["GET", "POST"],
+    },
   });
 
+  // Map of userId => array of socketIds
   const userSocketMap = {};
 
-  io.on("connection", async (socket) => {
+  // Helper functions
+  async function emitGamesList() {
+    const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } })
+      .populate("createdBy", "username credit");
+    io.emit("games_list", updatedGames);
+  }
+
+  async function emitLiveGames() {
+    const liveGames = await Game.find({ status: "started" })
+      .populate("createdBy", "username credit")
+      .populate("acceptedBy", "username credit");
+    io.emit("live_games", liveGames);
+  }
+
+  // Interval to check game status every 10 seconds
+  setInterval(async () => {
+    try {
+      const now = new Date();
+
+      // Expire pending/requested games older than 5 min
+      const expiredPendingGames = await Game.updateMany(
+        { status: { $in: ["pending", "requested"] }, createdAt: { $lt: new Date(now - 5 * 60 * 1000) } },
+        { status: "expired" }
+      );
+
+      // Complete started games older than 15 min
+      const completedGames = await Game.updateMany(
+        { status: "started", createdAt: { $lt: new Date(now - 15 * 60 * 1000) } },
+        { status: "completed" }
+      );
+
+      // Cancel inactive started games older than 20 min since last update
+      const inactiveGames = await Game.find({
+        status: "started",
+        updatedAt: { $lt: new Date(now - 20 * 60 * 1000) },
+      }).populate("createdBy", "_id").populate("acceptedBy", "_id");
+
+      for (const game of inactiveGames) {
+        game.status = "cancelled";
+        await game.save();
+
+        const creatorSockets = userSocketMap[game.createdBy?._id?.toString()] || [];
+        const accepterSockets = userSocketMap[game.acceptedBy?._id?.toString()] || [];
+
+        [...creatorSockets, ...accepterSockets].forEach(socketId => {
+          io.to(socketId).emit("game_over", {
+            gameId: game._id,
+            status: game.status,
+            message: "Game cancelled due to inactivity",
+          });
+        });
+      }
+
+      // Emit updates to clients
+      await emitGamesList();
+      await emitLiveGames();
+
+    } catch (err) {
+      console.error("Error in game status interval:", err);
+    }
+  }, 10000); // every 10 seconds
+
+  io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-
-    setInterval(async () => {
-      try {
-        const games = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-
-        let hasExpired = false;
-
-        for (const game of games) {
-          const gameAge = Date.now() - new Date(game.createdAt).getTime();
-
-          if (gameAge > 5 * 60 * 1000) {
-            game.status = "expired";
-            await game.save();
-            hasExpired = true;
-          }
-        }
-
-        if (hasExpired) {
-          const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-
-          io.emit("games_list", updatedGames);
-        }
-
-      } catch (error) {
-        console.error("Error in game expiration loop:", error);
-      }
-    }, 1000);
-
-    const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
-    io.emit("live_games", updatedGames);
-
-    setInterval(async () => {
-      try {
-        const games = await Game.find({ status: "started" }).populate("createdBy", "username credit");
-
-        let hasExpired = false;
-
-        for (const game of games) {
-          const gameAge = Date.now() - new Date(game.createdAt).getTime();
-
-          if (gameAge > 15 * 60 * 1000) {
-            game.status = "completed";
-            await game.save();
-            hasExpired = true;
-          }
-        }
-
-        if (hasExpired) {
-          const updatedGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
-          io.emit("live_games", updatedGames);
-        }
-
-      } catch (error) {
-        console.error("Error in live game expiration loop:", error);
-      }
-    }, 1000);
-
-    setInterval(async () => {
-      try {
-
-        const games = await Game.find({ status: "started" })
-          .populate("createdBy", "username credit")
-          .populate("acceptedBy", "username credit");
-
-
-        for (const game of games) {
-          const inactiveTime = Date.now() - new Date(game.updatedAt).getTime();
-
-          if (inactiveTime > 20 * 60 * 1000) {
-
-            game.status = "cancelled";
-            await game.save();
-
-            const creatorId = game.createdBy?._id?.toString();
-            const accepterId = game.acceptedBy?._id?.toString();
-
-            const creatorSocketId = creatorId ? userSocketMap[creatorId] : null;
-            const accepterSocketId = accepterId ? userSocketMap[accepterId] : null;
-
-            if (creatorSocketId) {
-              io.to(creatorSocketId).emit("game_over", {
-                gameId: game._id,
-                status: game.status,
-                message: "Game cancelled due to inactivity",
-              });
-            }
-
-            if (accepterSocketId) {
-              io.to(accepterSocketId).emit("game_over", {
-                gameId: game._id,
-                status: game.status,
-                message: "Game cancelled due to inactivity",
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error("❌ Error in inactive game cancel loop:", error);
-      }
-    }, 1000);
-
+    // Register user socket
     socket.on("register_user", async (userId) => {
-      console.log("Registering user:", userId);
-      userSocketMap[userId] = socket.id;
+      if (!userSocketMap[userId]) userSocketMap[userId] = [];
+      userSocketMap[userId].push(socket.id);
       socket.userId = userId;
-      const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-      io.emit("games_list", updatedGames);
+
+      await emitGamesList();
     });
 
+    // Delete game
     socket.on("delete_game", async (gameId) => {
       try {
         await Game.findByIdAndDelete(gameId);
-        const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-        io.emit("games_list", updatedGames);
+        await emitGamesList();
       } catch (error) {
         console.error("Error deleting game:", error);
       }
     });
 
+    // Accept game request
     socket.on("accept_game_request", async ({ gameId, userId }) => {
       try {
-        const game = await Game.findByIdAndUpdate(gameId, { status: "requested", acceptedBy: userId }, { new: true }).populate("createdBy", "username");
+        const game = await Game.findByIdAndUpdate(
+          gameId,
+          { status: "requested", acceptedBy: userId },
+          { new: true }
+        ).populate("createdBy", "username");
 
         if (!game) return;
 
-        const creatorId = game.createdBy._id.toString();
-        const creatorSocketId = userSocketMap[creatorId];
-
-        if (creatorSocketId) {
-          io.to(creatorSocketId).emit("game_accepted", {
+        const creatorSockets = userSocketMap[game.createdBy._id.toString()] || [];
+        creatorSockets.forEach(socketId => {
+          io.to(socketId).emit("game_accepted", {
             gameId,
-            acceptedBy: userId
+            acceptedBy: userId,
           });
-        }
+        });
 
-        const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-        io.emit("games_list", updatedGames);
+        await emitGamesList();
       } catch (error) {
         console.error("Error accepting game:", error);
       }
-    })
+    });
 
+    // Cancel game request
     socket.on("cancel_game_request", async (gameId) => {
       try {
         const game = await Game.findById(gameId).populate("acceptedBy", "_id username");
-
         if (!game || !game.acceptedBy) return;
 
-        const accepterId = game.acceptedBy._id.toString();
-        const accepterSocketId = userSocketMap[accepterId];
-
-        if (accepterSocketId) {
-          io.to(accepterSocketId).emit("game_request_canceled", {
+        const accepterSockets = userSocketMap[game.acceptedBy._id.toString()] || [];
+        accepterSockets.forEach(socketId => {
+          io.to(socketId).emit("game_request_canceled", {
             gameId,
             message: "The creator has canceled the game request.",
           });
-        }
+        });
 
         await Game.findByIdAndUpdate(gameId, { status: "cancelled", acceptedBy: null });
-
-        const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-        io.emit("games_list", updatedGames);
-
+        await emitGamesList();
       } catch (error) {
         console.error("Error canceling game request:", error);
       }
     });
 
+    // Start game
     socket.on("start_game", async (gameId) => {
       try {
         const game = await Game.findById(gameId)
-          .populate("createdBy", "_id username credit ")
-          .populate("acceptedBy", "_id username credit ");
+          .populate("createdBy", "_id username credit")
+          .populate("acceptedBy", "_id username credit");
 
         if (!game || !game.acceptedBy) return;
 
-        const accepterId = game.acceptedBy._id.toString();
-        const accepterSocketId = userSocketMap[accepterId];
-
-        if (accepterSocketId) {
-          io.to(accepterSocketId).emit("start_game", {
+        const accepterSockets = userSocketMap[game.acceptedBy._id.toString()] || [];
+        accepterSockets.forEach(socketId => {
+          io.to(socketId).emit("start_game", {
             gameId,
             roomId: game.roomId,
             message: "The creator has started the game.",
           });
-        }
+        });
 
         const betAmount = game.betAmount;
         await Promise.all([
-          User.findByIdAndUpdate(game.createdBy._id, {
-            $inc: { credit: -betAmount }
-          }),
-          User.findByIdAndUpdate(game.acceptedBy._id, {
-            $inc: { credit: -betAmount }
-          })
+          User.findByIdAndUpdate(game.createdBy._id, { $inc: { credit: -betAmount } }),
+          User.findByIdAndUpdate(game.acceptedBy._id, { $inc: { credit: -betAmount } }),
         ]);
 
         await Game.findByIdAndUpdate(gameId, { status: "started" });
 
-        // const totalPot = betAmount * 2;
-        // const adminCommission = totalPot - game.winningAmount;
-
-        // if (adminCommission > 0) {
-        //   await User.findOneAndUpdate(
-        //     { role: "admin" },
-        //     { $inc: { earning: adminCommission } }
-        //   );
-        // }
-
-        const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-        io.emit("games_list", updatedGames);
-
-        const liveGames = await Game.find({ status: "started" }).populate("createdBy", "username credit").populate("acceptedBy", "username credit");
-        io.emit("live_games", liveGames);
-
+        await emitGamesList();
+        await emitLiveGames();
       } catch (error) {
         console.error("Error starting game:", error);
       }
     });
 
+    // Payment status update
     socket.on("update_payment_status", async ({ paymentId, status }) => {
       try {
         if (!["approved", "rejected", "pending"].includes(status)) return;
@@ -247,114 +189,58 @@ function initSocket(server) {
         payment.status = status;
         await payment.save();
 
-        // 🔹 Notify the user who made the payment
-        const userId = payment.userId._id.toString();
-        const userSocketId = userSocketMap[userId];
-        if (userSocketId) {
-          io.to(userSocketId).emit("payment_update", {
+        const userSockets = userSocketMap[payment.userId._id.toString()] || [];
+        userSockets.forEach(socketId => {
+          io.to(socketId).emit("payment_update", {
             message: `Your payment has been ${status}`,
             payment,
           });
-        }
-
+        });
       } catch (error) {
-        console.error("Error approving payment:", error);
+        console.error("Error updating payment:", error);
       }
     });
 
+    // Withdraw status update
     socket.on("update_withdraw_status", async ({ withdrawId, status }) => {
       try {
-        console.log("🔔 Received update_withdraw_status event:", { withdrawId, status });
-
-        if (!["paid", "rejected"].includes(status)) {
-          console.log("⚠️ Invalid status received, ignoring:", status);
-          return;
-        }
+        if (!["paid", "rejected"].includes(status)) return;
 
         const withdraw = await Withdraw.findById(withdrawId).populate("userId", "username winningAmount");
-        if (!withdraw) {
-          console.log("❌ Withdraw not found for ID:", withdrawId);
-          return;
-        }
-
-        console.log("✅ Withdraw found:", {
-          id: withdraw._id,
-          statusBefore: withdraw.status,
-          user: withdraw.userId?.username,
-          amount: withdraw.amount,
-        });
+        if (!withdraw) return;
 
         withdraw.status = status;
         await withdraw.save();
-        console.log("💾 Withdraw status updated to:", status);
 
-        const user = await User.findById(withdraw.userId._id);
-        if (user && status === "paid") {
-          console.log("👤 User found:", { id: user._id, username: user.username, oldWinningAmount: user.winningAmount });
-
-          const oldAmount = Number(user.winningAmount) || 0;
-          const deductAmount = Number(withdraw.amount) || 0;
-          const newAmount = oldAmount - deductAmount < 0 ? 0 : oldAmount - deductAmount;
-
-          console.log("💲 Calculating winningAmount:", {
-            oldAmount,
-            deductAmount,
-            newAmount,
-          });
-
-          user.winningAmount = String(newAmount);
-          await user.save();
-          console.log("💾 User winningAmount updated successfully:", user.winningAmount);
-        } else {
-          console.log("ℹ️ No user update needed (status:", status, ")");
+        if (status === "paid" && withdraw.userId) {
+          const user = await User.findById(withdraw.userId._id);
+          if (user) {
+            const oldAmount = Number(user.winningAmount) || 0;
+            const newAmount = Math.max(0, oldAmount - Number(withdraw.amount));
+            user.winningAmount = String(newAmount);
+            await user.save();
+          }
         }
-
-        // 🔹 (Optional) Notify user if needed
-        // console.log("📡 Attempting to notify user about withdrawal status change...");
-        // const userId = withdraw.userId._id.toString();
-        // const userSocketId = userSocketMap[userId];
-        // if (userSocketId) {
-        //   console.log("📡 Emitting withdraw_update event to user socket:", userSocketId);
-        //   io.to(userSocketId).emit("withdraw_update", {
-        //     message: `Your withdrawal has been ${status}`,
-        //     withdraw,
-        //   });
-        // } else {
-        //   console.log("⚠️ User socket not found for userId:", userId);
-        // }
-
       } catch (error) {
-        console.error("❌ Error in update_withdraw_status:", error);
+        console.error("Error updating withdraw status:", error);
       }
     });
-    
+
+    // Admin winner decision
     socket.on("admin_winner_decision", async ({ gameId, winner }) => {
       try {
-
         const game = await Game.findById(gameId)
           .populate("createdBy", "_id username")
           .populate("acceptedBy", "_id username");
 
-        if (!game) {
-          return socket.emit("error_message", { message: "Game not found" });
+        if (!game) return socket.emit("error_message", { message: "Game not found" });
+        if (game.adminstatus === "decided") return socket.emit("error_message", { message: "Game already decided" });
+
+        if (![game.createdBy._id.toString(), game.acceptedBy._id.toString()].includes(winner)) {
+          return socket.emit("error_message", { message: "Winner must be one of the players" });
         }
 
-        if (game.adminstatus === "decided") {
-          return socket.emit("error_message", { message: "Game has already been decided" });
-        }
-
-        if (
-          String(game.createdBy._id) !== String(winner) &&
-          String(game.acceptedBy._id) !== String(winner)
-        ) {
-          return socket.emit("error_message", { message: "Winner must be one of the players in this game" });
-        }
-
-        const loserId =
-          String(game.createdBy._id) === String(winner)
-            ? game.acceptedBy._id
-            : game.createdBy._id;
-
+        const loserId = game.createdBy._id.toString() === winner ? game.acceptedBy._id : game.createdBy._id;
         game.winner = winner;
         game.loser = loserId;
         game.adminstatus = "decided";
@@ -363,28 +249,23 @@ function initSocket(server) {
 
         const user = await User.findById(winner);
         if (user) {
-          const oldAmount = Number(user.winningAmount) || 0;
-          const addAmount = Number(game.winningAmount) || 0;
-          const newAmount = oldAmount + addAmount;
-
+          const newAmount = (Number(user.winningAmount) || 0) + Number(game.winningAmount || 0);
           user.winningAmount = String(newAmount);
           await user.save();
-        } else {
-          console.log("⚠️ Winner user not found in DB:", winner);
         }
-
       } catch (error) {
-        console.error("❌ Error in admin_winner_decision:", error);
+        console.error("Error in admin_winner_decision:", error);
       }
     });
 
+    // Handle disconnect
     socket.on("disconnect", async () => {
-      if (socket.userId) {
-        delete userSocketMap[socket.userId];
+      if (socket.userId && userSocketMap[socket.userId]) {
+        userSocketMap[socket.userId] = userSocketMap[socket.userId].filter(id => id !== socket.id);
+        if (userSocketMap[socket.userId].length === 0) delete userSocketMap[socket.userId];
       }
-      const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");
-      io.emit("games_list", updatedGames);
 
+      await emitGamesList();
       console.log("User disconnected:", socket.id);
     });
   });
