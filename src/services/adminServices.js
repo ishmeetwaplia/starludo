@@ -476,6 +476,20 @@ exports.getAllGames = async (query) => {
           (g.createdBy?.username?.toLowerCase().includes(searchLower)) ||
           (g.acceptedBy?.username?.toLowerCase().includes(searchLower))
       );
+
+      if (games.length === 0) {
+        return {
+          success: true,
+          status: statusCode.OK,
+          message: "No games matched the search",
+          data: {
+            games: [],
+            total: 0,
+            page: Number(page),
+            pages: 0,
+          },
+        };
+      }
     }
 
     const total = games.length;
