@@ -18,6 +18,16 @@ const storage = multer.diskStorage({
   }
 });
 
-const uploadPayment = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png/;
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.test(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only .png, .jpg and .jpeg format allowed!"), false);
+  }
+};
+
+const uploadPayment = multer({ storage, fileFilter });
 
 module.exports = uploadPayment;
