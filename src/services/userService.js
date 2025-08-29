@@ -336,6 +336,14 @@ exports.resetPassword = async (req) => {
       };
     }
 
+    if (user.role !== "user") {
+      return {
+        status: statusCode.FORBIDDEN,
+        success: false,
+        message: "Only users are allowed to reset password",
+      };
+    }
+
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
       return {
