@@ -223,7 +223,7 @@ exports.login = async (req) => {
       };
     }
 
-    const token = jwt.sign({ id: user._id.toString(), username: user.username }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id.toString() }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
@@ -236,11 +236,7 @@ exports.login = async (req) => {
       message: resMessage.Login_success || "Login successful",
       data: {
         token,
-        user: {
-          id: user._id.toString(), 
-          username: user.username,
-          email: user.email,
-        },
+        userId: user._id.toString(),
       },
     };
   } catch (error) {
@@ -251,3 +247,4 @@ exports.login = async (req) => {
     };
   }
 };
+
