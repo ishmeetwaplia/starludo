@@ -141,7 +141,14 @@ exports.submitWinning = async (req) => {
       };
 
       if (global.io) {
-        global.io.emit("game_over", socketGame);
+        const admins = await User.find({ role: "admin" });
+        admins.forEach((admin) => {
+          const adminSocketId =
+            global.io.sockets.sockets.get(admin._id.toString()) || null;
+          if (adminSocketId) {
+            global.io.to(adminSocketId).emit("game_over", socketGame);
+          }
+        });
       }
 
       return {
@@ -193,10 +200,6 @@ exports.submitWinning = async (req) => {
         createdByUsername: game.createdBy?.username || null,
         acceptedByUsername: game.acceptedBy?.username || null
       };
-
-      // if (global.io) {
-      //   global.io.emit("game_over", socketGame);
-      // }
 
       return {
         status: statusCode.OK,
