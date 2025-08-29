@@ -544,17 +544,19 @@ exports.getUserGameStats = async (userId, query) => {
       return {
         status: statusCode.NOT_FOUND,
         success: false,
-        message: resMessage.USER_NOT_FOUND
+        message: resMessage.USER_NOT_FOUND,
       };
     }
 
-    let { page = 1, limit = 10, type } = query;
+    let { page = 1, limit = 10, type, search, status } = query;
     page = Number(page);
     limit = Number(limit);
     const skip = (page - 1) * limit;
 
-    // Build filter based on type
+    // 🔹 Base filter
     let filter = {};
+
+    // Apply type filter
     if (type === "created") {
       filter.createdBy = userId;
     } else if (type === "accepted") {
@@ -569,7 +571,31 @@ exports.getUserGameStats = async (userId, query) => {
       filter.$or = [{ createdBy: userId }, { acceptedBy: userId }];
     }
 
-    // Fetch games with pagination
+    // 🔹 Status filter
+    if (status) {
+      const statuses = status.split(","); // allow multiple (e.g. status=completed,pending)
+      filter.status = { $in: statuses };
+    }
+
+    // 🔹 Search filter (match usernames)
+    if (search) {
+      const users = await User.find({
+        username: { $regex: search, $options: "i" },
+      }).select("_id");
+
+      const userIds = users.map((u) => u._id);
+
+      filter.$or = [
+        { createdBy: { $in: userIds } },
+        { acceptedBy: { $in: userIds } },
+        { winner: { $in: userIds } },
+        { loser: { $in: userIds } },
+        { quitBy: { $in: userIds } },
+        ...(filter.$or || []), // keep type filter $or if present
+      ];
+    }
+
+    // 🔹 Fetch games with pagination
     const games = await Game.find(filter)
       .populate("createdBy", "_id username")
       .populate("acceptedBy", "_id username")
@@ -582,11 +608,11 @@ exports.getUserGameStats = async (userId, query) => {
 
     const total = await Game.countDocuments(filter);
 
-    // Pre-calculate all counts
+    // 🔹 Pre-calculate all counts (not affected by search/status)
     const createdCount = await Game.countDocuments({ createdBy: userId });
     const acceptedCount = await Game.countDocuments({ acceptedBy: userId });
     const playedCount = await Game.countDocuments({
-      $or: [{ createdBy: userId }, { acceptedBy: userId }]
+      $or: [{ createdBy: userId }, { acceptedBy: userId }],
     });
     const wonCount = await Game.countDocuments({ winner: userId });
     const lostCount = await Game.countDocuments({ loser: userId });
@@ -607,14 +633,14 @@ exports.getUserGameStats = async (userId, query) => {
         games,
         total,
         page,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   } catch (error) {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: error.message || resMessage.Server_error
+      message: error.message || resMessage.Server_error,
     };
   }
 };
