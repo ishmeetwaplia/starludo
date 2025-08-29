@@ -49,7 +49,19 @@ const resMessage = {
     WINNING_SUBMITTED: "Winning submitted successfully",
     Invalid_refer_code: "Invalid_refer_code",
     Login_success: "login successful",
-};
+    User_not_found: "User not found",
+    Profile_fetched_successfully: "Profile fetched successfully",
+    Logout_successful: "Logout successful",
+    GAME_NOT_FOUND: "Game not found",
+    WINNING_SCREENSHOT_REQUIRED: "Winning screenshot is required",
+    WINNING_SUBMITTED: "Winning submitted successfully",
+    GAME_MARKED_LOST: "Game marked as lost",
+    GAME_QUIT: "Game has been quit",
+    Review_created_successfully: "Review created successfully",
+    Review_list_retrieved_successfully: "Review list retrieved successfully",
+    No_reviews_found: "No reviews found",
+    Review_stats_retrieved_successfully: "Review stats retrieved successfully",
+    };
 
 module.exports = {
     statusCode,
