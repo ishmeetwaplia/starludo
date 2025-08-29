@@ -96,3 +96,15 @@ exports.withdrawHistoryController = async (req) => {
     };
   }
 };
+
+exports.resetPasswordController = async (req) => {
+  try {
+    return await service.resetPassword(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};

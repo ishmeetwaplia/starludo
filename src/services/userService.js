@@ -2,6 +2,7 @@ const { statusCode, resMessage } = require('../config/constant');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
 const Withdraw = require("../models/Withdraw");
+const bcrypt = require("bcryptjs");
 
 exports.profile = async (req) => {
     try {
@@ -312,3 +313,53 @@ exports.withdrawHistory = async (req) => {
     };
   }
 }
+
+exports.resetPassword = async (req) => {
+  try {
+    const { _id } = req.auth; 
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Old password and new password are required",
+      };
+    }
+
+    const user = await User.findById(_id).select("+password");
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found || "User not found",
+      };
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Old password is incorrect",
+      };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Password updated successfully",
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+};
