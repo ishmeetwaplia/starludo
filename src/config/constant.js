@@ -47,7 +47,8 @@ const resMessage = {
     WINNING_SCREENSHOT_REQUIRED: "Winning screenshot is required",
     GAME_MARKED_LOST: "Game marked as lost",
     WINNING_SUBMITTED: "Winning submitted successfully",
-    Invalid_refer_code: "Invalid_refer_code"
+    Invalid_refer_code: "Invalid_refer_code",
+    Login_success: "login successful",
 };
 
 module.exports = {

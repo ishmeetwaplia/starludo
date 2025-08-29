@@ -223,8 +223,8 @@ exports.login = async (req) => {
       };
     }
 
-    const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+    const token = jwt.sign({ id: user._id.toString(), username: user.username }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
     });
 
     user.token = token;
@@ -237,7 +237,7 @@ exports.login = async (req) => {
       data: {
         token,
         user: {
-          id: user._id,
+          id: user._id.toString(), 
           username: user.username,
           email: user.email,
         },
