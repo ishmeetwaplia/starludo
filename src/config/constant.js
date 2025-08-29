@@ -61,6 +61,7 @@ const resMessage = {
     Review_list_retrieved_successfully: "Review list retrieved successfully",
     No_reviews_found: "No reviews found",
     Review_stats_retrieved_successfully: "Review stats retrieved successfully",
+    Room_id_already_exists: "Room ID already exists. Please choose a different Room ID."
     };
 
 module.exports = {

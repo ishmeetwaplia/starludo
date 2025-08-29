@@ -25,6 +25,15 @@ exports.createBet = async (req) => {
         message: "Insufficient credit to place this bet"
       };
     }
+    
+    const roomExists = await Game.findOne({ roomId });
+    if(roomExists){
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Room_id_already_exists
+      };
+    }
 
     const existingGame = await Game.findOne({
       createdBy: _id,
