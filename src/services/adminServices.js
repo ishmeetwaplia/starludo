@@ -940,12 +940,7 @@ exports.approveWithdraw = async (withdrawId, status) => {
 
 exports.getFilteredGames = async (query) => {
   try {
-    const {
-      adminstatus,
-      search,
-      page = 1,
-      limit = 10
-    } = query;
+    const { adminstatus, search, page = 1, limit = 10 } = query;
 
     const filter = {
       status: { $in: ["completed", "quit"] },
@@ -953,23 +948,31 @@ exports.getFilteredGames = async (query) => {
 
     if (adminstatus) filter.adminstatus = adminstatus;
 
-    const userFilter = search
-      ? { username: { $regex: search, $options: "i" } }
-      : {};
-
     const skip = (page - 1) * limit;
 
-    const games = await Game.find(filter)
-      .populate({
-        path: "createdBy acceptedBy",
-        select: "username",
-        match: userFilter
-      })
+    // Fetch games with populated users
+    let games = await Game.find(filter)
+      .populate("createdBy", "username")
+      .populate("acceptedBy", "username")
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
+      .limit(parseInt(limit));
 
-    const total = await Game.countDocuments(filter);
+    // Apply search filter manually on populated fields if search exists
+    if (search) {
+      const regex = new RegExp(search, "i");
+      games = games.filter(
+        (g) =>
+          (g.createdBy && regex.test(g.createdBy.username)) ||
+          (g.acceptedBy && regex.test(g.acceptedBy.username))
+      );
+    }
+
+    // Total count considering search filter
+    let total = await Game.countDocuments(filter);
+    if (search) {
+      total = games.length;
+    }
 
     return {
       status: statusCode.SUCCESS,
@@ -981,14 +984,14 @@ exports.getFilteredGames = async (query) => {
         page: parseInt(page),
         limit: parseInt(limit),
         totalPages: Math.ceil(total / limit),
-      }
+      },
     };
   } catch (error) {
     console.error("Error in getFilteredGames:", error);
     return {
       status: statusCode.SERVER_ERROR,
       success: false,
-      message: error.message
+      message: error.message,
     };
   }
 };
