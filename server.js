@@ -6,6 +6,7 @@ const connectDB = require("./src/config/db");
 const cors = require("cors");
 const http = require("http");
 const initSocket = require("./socket");
+const path = require("path");
 
 dotenv.config();
 connectDB();
@@ -15,8 +16,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:4000",
-    "https://sta-ludo-mgvh.vercel.app",
-    "https://stat-ludo-admin.vercel.app",
+    "https://stat-ludo-admin-dvy2.vercel.app",
     "https://indianludoking.com"
 ];
 
@@ -46,7 +46,7 @@ app.use("/api/user", require("./src/routes/userRoute"));
 app.use("/api/review", require("./src/routes/reviewRoute"));
 app.use("/api/game", require("./src/routes/gameRoute"));
 app.use("/api/admin", require("./src/routes/adminRoute"));
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/assets", require("./src/routes/assetRoute"));
 app.use("/api/payment", require("./src/routes/paymentRoute"));
 
