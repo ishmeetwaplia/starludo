@@ -28,7 +28,7 @@ exports.createBet = async (req) => {
 
     const existingGame = await Game.findOne({
       createdBy: _id,
-      status: { $in: ["pending", "requested" ,"started"] }
+      status: { $in: ["pending", "requested", "started"] }
     });
 
     if (existingGame) {
@@ -37,6 +37,21 @@ exports.createBet = async (req) => {
         success: false,
         message: "You already have an active bet. Please complete or cancel it before creating a new one."
       };
+    }
+
+    if (roomId) {
+      const existingRoomGame = await Game.findOne({
+        roomId,
+        status: { $nin: ["completed", "cancelled", "expired", "quit"] }
+      });
+
+      if (existingRoomGame) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "This room already has an active game."
+        };
+      }
     }
 
     const winningAmount = Math.floor(0.8 * 2 * betAmount);
