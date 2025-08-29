@@ -194,9 +194,9 @@ exports.submitWinning = async (req) => {
         acceptedByUsername: game.acceptedBy?.username || null
       };
 
-      if (global.io) {
-        global.io.emit("game_over", socketGame);
-      }
+      // if (global.io) {
+      //   global.io.emit("game_over", socketGame);
+      // }
 
       return {
         status: statusCode.OK,
