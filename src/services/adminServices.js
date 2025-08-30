@@ -1026,8 +1026,11 @@ exports.getFilteredGames = async (query) => {
       {
         $lookup: {
           from: "users",
-          localField: "createdBy",
-          foreignField: "_id",
+          let: { userId: "$createdBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
           as: "createdBy"
         }
       },
@@ -1035,8 +1038,11 @@ exports.getFilteredGames = async (query) => {
       {
         $lookup: {
           from: "users",
-          localField: "acceptedBy",
-          foreignField: "_id",
+          let: { userId: "$acceptedBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
           as: "acceptedBy"
         }
       },
@@ -1049,14 +1055,17 @@ exports.getFilteredGames = async (query) => {
 
     const games = await Game.aggregate(pipeline);
 
-    // Total count (with search if provided)
+    // Total count
     const countPipeline = [
       { $match: filter },
       {
         $lookup: {
           from: "users",
-          localField: "createdBy",
-          foreignField: "_id",
+          let: { userId: "$createdBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
           as: "createdBy"
         }
       },
@@ -1064,8 +1073,11 @@ exports.getFilteredGames = async (query) => {
       {
         $lookup: {
           from: "users",
-          localField: "acceptedBy",
-          foreignField: "_id",
+          let: { userId: "$acceptedBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
           as: "acceptedBy"
         }
       },
