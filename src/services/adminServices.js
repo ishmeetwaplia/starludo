@@ -265,8 +265,8 @@ exports.getAllUsers = async (query) => {
     const filter = {};
 
     filter.role = "user";
-    if (isActive !== undefined) filter.isActive = isActive === "true"; 
-    if (isBanned !== undefined) filter.isBanned = isBanned === "true"; 
+    if (isActive !== undefined) filter.isActive = isActive === "true";
+    if (isBanned !== undefined) filter.isBanned = isBanned === "true";
 
     if (search) {
       filter.$or = [
@@ -755,7 +755,7 @@ exports.getAllPayments = async (query) => {
     const skip = (page - 1) * limit;
     payments = payments.slice(skip, skip + Number(limit));
 
-    const paymentData = payments.map((p) => {
+    payments = payments.map((p) => {
       const obj = p.toObject();
       if (obj.screenshot) {
         obj.screenshot = obj.screenshot.replace(
@@ -771,7 +771,7 @@ exports.getAllPayments = async (query) => {
       status: statusCode.OK,
       message: "Payments fetched successfully",
       data: {
-        paymentData,
+        payments,
         total,
         page: Number(page),
         pages: Math.ceil(total / limit),
@@ -1137,7 +1137,7 @@ exports.decideGame = async (gameId, winnerId) => {
     game.winner = winnerId;
     game.loser = loserId;
     game.adminstatus = "decided";
-    game.status = "completed"; 
+    game.status = "completed";
     await game.save();
 
     const user = await User.findById(winnerId).select("-token -password");
