@@ -199,7 +199,7 @@ exports.deleteUser = async (userId) => {
   try {
     if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
 
-    const deleted = await User.findByIdAndDelete(userId);
+    const deleted = await User.findByIdAndDelete(userId).select("-token -password");
     if (!deleted) {
       return {
         status: statusCode.NOT_FOUND,
@@ -226,7 +226,7 @@ exports.getUserById = async (userId) => {
   try {
     if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-token -password");;
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
@@ -307,7 +307,7 @@ exports.banUnbanUser = async (userId, isBanned) => {
   try {
     if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-token -password");
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
@@ -338,7 +338,7 @@ exports.updateUser = async (userId, userData) => {
   try {
     if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-token -password");
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
@@ -522,7 +522,7 @@ exports.addCredit = async (userId, creditToAdd) => {
   try {
     if (!User) throw new Error(resMessage.USER_MODEL_NOT_INITIALIZED);
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-token -password");
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
@@ -553,7 +553,7 @@ exports.addCredit = async (userId, creditToAdd) => {
 
 exports.getUserGameStats = async (userId, query) => {
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-token -password");
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
@@ -790,7 +790,7 @@ exports.approvePayment = async (paymentId, status) => {
 
   if (status === "approved") {
     // Increase user credit
-    const user = await User.findById(payment.userId);
+    const user = await User.findById(payment.userId).select("-token -password");
     if (!user) {
       throw new Error("User not found");
     }
@@ -957,7 +957,7 @@ exports.approveWithdraw = async (withdrawId, status) => {
   await withdraw.save();
 
   if (status === "paid") {
-    const user = await User.findById(withdraw.userId);
+    const user = await User.findById(withdraw.userId).select("-token -password");
     if (!user) {
       throw new Error("User not found");
     }
@@ -1118,7 +1118,7 @@ exports.decideGame = async (gameId, winnerId) => {
     game.status = "completed"; 
     await game.save();
 
-    const user = await User.findById(winnerId);
+    const user = await User.findById(winnerId).select("-token -password");
     if (user) {
       const oldAmount = Number(user.winningAmount) || 0;
       const addAmount = Number(game.winningAmount) || 0;
