@@ -17,6 +17,7 @@ const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:4000",
     "https://stat-ludo-admin-dvy2.vercel.app",
+    "https://admin.indianludoking.com",
     "https://indianludoking.com"
 ];
 
