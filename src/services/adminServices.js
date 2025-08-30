@@ -1021,7 +1021,7 @@ exports.getFilteredGames = async (query) => {
         total,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit),
+        pages: Math.ceil(total / limit),
       },
     };
   } catch (error) {
