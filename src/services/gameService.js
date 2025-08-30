@@ -237,7 +237,7 @@ exports.getUserGameHistory = async (req) => {
   try {
     const { _id } = req.auth;
 
-    const history = await Game.find({
+    let history = await Game.find({
       $or: [
         { createdBy: _id },
         { acceptedBy: _id },
@@ -246,6 +246,12 @@ exports.getUserGameHistory = async (req) => {
       ]
     }).sort({ createdAt: -1 });
 
+    history = history.map((game) => {
+      const gameObj = game.toObject();
+      gameObj.decision = game.winner?.toString() === _id.toString() ? "win" : "lost";
+      return gameObj;
+    });
+
     return {
       status: statusCode.OK,
       success: true,
@@ -253,6 +259,10 @@ exports.getUserGameHistory = async (req) => {
       data: history
     };
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
   }
 };
