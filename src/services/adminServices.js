@@ -726,34 +726,32 @@ exports.uploadAssetsService = async (banners, tournaments) => {
 
 exports.getAllPayments = async (query) => {
   try {
-    const {
-      status,
-      search,
-      page = 1,
-      limit = 10,
-    } = query;
+    const { status, search, minAmount, maxAmount, page = 1, limit = 10 } = query;
 
     const filter = {};
     if (status) filter.status = status;
 
-    // fetch without skip/limit first
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
+
     let payments = await Payment.find(filter)
       .populate("userId", "_id username phone credit")
       .sort({ createdAt: -1 });
 
-    // Apply search filter if provided
     if (search) {
       const searchLower = search.toLowerCase();
       payments = payments.filter(
         (p) =>
           p.utrNumber?.toLowerCase().includes(searchLower) ||
-          p.userId?.username?.toLowerCase().includes(searchLower)
+          p.userId?.username?.toLowerCase().includes(searchLower) ||
+          p.userId?.phone?.toLowerCase().includes(searchLower)
       );
     }
 
     const total = payments.length;
-
-    // Apply pagination AFTER search
     const skip = (page - 1) * limit;
     payments = payments.slice(skip, skip + Number(limit));
 
@@ -770,8 +768,8 @@ exports.getAllPayments = async (query) => {
     };
   } catch (error) {
     return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
       message: error.message || resMessage.Server_error,
     };
   }
