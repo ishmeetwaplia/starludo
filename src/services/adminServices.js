@@ -986,31 +986,74 @@ exports.getFilteredGames = async (query) => {
 
     if (adminstatus) filter.adminstatus = adminstatus;
 
-    const skip = (page - 1) * limit;
-
-    // Fetch games with populated users
-    let games = await Game.find(filter)
-      .populate("createdBy", "username")
-      .populate("acceptedBy", "username")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // Apply search filter manually on populated fields if search exists
+    let searchCondition = {};
     if (search) {
       const regex = new RegExp(search, "i");
-      games = games.filter(
-        (g) =>
-          (g.createdBy && regex.test(g.createdBy.username)) ||
-          (g.acceptedBy && regex.test(g.acceptedBy.username))
-      );
+      searchCondition = {
+        $or: [
+          { "createdBy.username": regex },
+          { "acceptedBy.username": regex }
+        ]
+      };
     }
 
-    // Total count considering search filter
-    let total = await Game.countDocuments(filter);
-    if (search) {
-      total = games.length;
-    }
+    const skip = (page - 1) * limit;
+
+    const pipeline = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: "users",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdBy"
+        }
+      },
+      { $unwind: "$createdBy" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "acceptedBy",
+          foreignField: "_id",
+          as: "acceptedBy"
+        }
+      },
+      { $unwind: { path: "$acceptedBy", preserveNullAndEmptyArrays: true } },
+      ...(search ? [{ $match: searchCondition }] : []),
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: parseInt(limit) }
+    ];
+
+    const games = await Game.aggregate(pipeline);
+
+    // Total count (with search if provided)
+    const countPipeline = [
+      { $match: filter },
+      {
+        $lookup: {
+          from: "users",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdBy"
+        }
+      },
+      { $unwind: "$createdBy" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "acceptedBy",
+          foreignField: "_id",
+          as: "acceptedBy"
+        }
+      },
+      { $unwind: { path: "$acceptedBy", preserveNullAndEmptyArrays: true } },
+      ...(search ? [{ $match: searchCondition }] : []),
+      { $count: "total" }
+    ];
+
+    const totalResult = await Game.aggregate(countPipeline);
+    const total = totalResult.length > 0 ? totalResult[0].total : 0;
 
     return {
       status: statusCode.SUCCESS,
