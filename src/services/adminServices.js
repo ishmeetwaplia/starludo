@@ -755,12 +755,23 @@ exports.getAllPayments = async (query) => {
     const skip = (page - 1) * limit;
     payments = payments.slice(skip, skip + Number(limit));
 
+    const paymentData = payments.map((p) => {
+      const obj = p.toObject();
+      if (obj.screenshot) {
+        obj.screenshot = obj.screenshot.replace(
+          "/www/wwwroot/default/ludo_backend",
+          ""
+        );
+      }
+      return obj;
+    });
+
     return {
       success: true,
       status: statusCode.OK,
       message: "Payments fetched successfully",
       data: {
-        payments,
+        paymentData,
         total,
         page: Number(page),
         pages: Math.ceil(total / limit),
@@ -819,13 +830,24 @@ exports.getUserPayments = async (userId, query) => {
 
     const skip = (page - 1) * limit;
 
-    const payments = await Payment.find(filter)
+    const paymentss = await Payment.find(filter)
       .populate("userId", "_id username phone credit")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit));
 
     const total = await Payment.countDocuments(filter);
+
+    const payments = paymentss.map((p) => {
+      const obj = p.toObject();
+      if (obj.screenshot) {
+        obj.screenshot = obj.screenshot.replace(
+          "/www/wwwroot/default/ludo_backend",
+          ""
+        );
+      }
+      return obj;
+    });
 
     return {
       success: true,
