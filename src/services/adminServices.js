@@ -1016,13 +1016,13 @@ exports.getFilteredGames = async (query) => {
       status: statusCode.SUCCESS,
       success: true,
       message: "Games fetched successfully",
-      data: games,
-      pagination: {
+      data: {
+        games,
         total,
         page: parseInt(page),
         limit: parseInt(limit),
         pages: Math.ceil(total / limit),
-      },
+      }
     };
   } catch (error) {
     console.error("Error in getFilteredGames:", error);
