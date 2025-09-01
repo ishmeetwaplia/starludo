@@ -1,4 +1,4 @@
-const { statusCode  , resMessage} = require("../config/constant");
+const { statusCode, resMessage } = require("../config/constant");
 const Game = require("../models/Game");
 const User = require("../models/User");
 const path = require("path");
@@ -25,9 +25,9 @@ exports.createBet = async (req) => {
         message: "Insufficient credit to place this bet"
       };
     }
-    
+
     const roomExists = await Game.findOne({ roomId });
-    if(roomExists){
+    if (roomExists) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -125,8 +125,8 @@ exports.submitWinning = async (req) => {
         screenshot: relativePath
       });
 
-      game.winningScreenshot = relativePath; 
-      game.status = "completed"; 
+      game.winningScreenshot = relativePath;
+      game.status = "completed";
       await game.save();
 
       // repopulate after save
@@ -150,14 +150,18 @@ exports.submitWinning = async (req) => {
       };
 
       if (global.io) {
-        const admins = await User.find({ role: "admin" });
-        admins.forEach((admin) => {
-          const adminSocketId =
-            global.io.sockets.sockets.get(admin._id.toString()) || null;
-          if (adminSocketId) {
-            global.io.to(adminSocketId).emit("game_over", socketGame);
-          }
-        });
+        try {
+          const admins = await User.find({ role: "admin" }).select("_id");
+          admins.forEach((admin) => {
+            const adminId = admin._id.toString();
+            const sockets = global.userSocketMap?.[adminId] || [];
+            sockets.forEach((socketId) => {
+              global.io.to(socketId).emit("game_over", socketGame);
+            });
+          });
+        } catch (err) {
+          console.error("Error notifying admins:", err);
+        }
       }
 
       return {
