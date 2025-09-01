@@ -32,6 +32,11 @@ exports.createPayment = async (req) => {
       screenshot: file?.path,
     });
 
+    payment.screenshot = payment.screenshot.replace(
+          "/www/wwwroot/default/ludo_backend",
+          ""
+        );
+
     if (global.io) {
       global.io.emit("new_payment", payment);
     }
