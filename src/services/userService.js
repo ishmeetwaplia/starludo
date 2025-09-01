@@ -5,37 +5,37 @@ const Withdraw = require("../models/Withdraw");
 const bcrypt = require("bcryptjs");
 
 exports.profile = async (req) => {
-    try {
-        const { _id } = req.auth;
-        const userInfo = await User.findById(_id);
-        if(!userInfo) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.User_not_found
-            };
-        }
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Profile_fetched_successfully,
-            data: userInfo
-        };
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message
-        };
+  try {
+    const { _id } = req.auth;
+    const userInfo = await User.findById(_id);
+    if (!userInfo) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found
+      };
     }
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Profile_fetched_successfully,
+      data: userInfo
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
 }
 
 exports.logout = async (req, res) => {
   try {
-    const {_id} = req.auth;
+    const { _id } = req.auth;
 
     const user = await User.findByIdAndUpdate(_id, { $unset: { token: "" } });
-    if(!user) {
+    if (!user) {
       return {
         status: statusCode.NOT_FOUND,
         success: false,
@@ -44,9 +44,9 @@ exports.logout = async (req, res) => {
     }
 
     return {
-        status: statusCode.OK,
-        success: true,
-        message: resMessage.Logout_successful,
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Logout_successful,
     }
   } catch (error) {
     return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
@@ -70,30 +70,30 @@ exports.updateProfile = async (req) => {
     }
 
     if (!username || !userInfo.updateUsername) {
-       return {
-          status: statusCode.BAD_REQUEST,
-          success: false,
-          message: "Username can't be updated."
-        };
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Username can't be updated."
+      };
     }
     userInfo.username = username;
     userInfo.updateUsername = false;
 
     await userInfo.save();
 
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Profile_fetched_successfully,
-            data: userInfo
-        };
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message
-        };
-    }
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Profile_fetched_successfully,
+      data: userInfo
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
 }
 
 exports.addCredit = async (req) => {
@@ -190,10 +190,21 @@ exports.getUserPayments = async (req) => {
       if (endDate) filter.createdAt.$lte = new Date(endDate);
     }
 
-    const payments = await Payment.find(filter)
+    let payments = await Payment.find(filter)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
+
+    payments = payments.map((p) => {
+      const obj = p.toObject();
+      if (obj.screenshot) {
+        obj.screenshot = obj.screenshot.replace(
+          "/www/indianludoking.com/staLudo",
+          ""
+        );
+      }
+      return obj;
+    });
 
     const total = await Payment.countDocuments(filter);
 
@@ -316,7 +327,7 @@ exports.withdrawHistory = async (req) => {
 
 exports.resetPassword = async (req) => {
   try {
-    const { _id } = req.auth; 
+    const { _id } = req.auth;
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
