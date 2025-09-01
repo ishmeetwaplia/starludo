@@ -85,7 +85,8 @@ function initSocket(server) {
       if (!userSocketMap[userId]) userSocketMap[userId] = [];
       userSocketMap[userId].push(socket.id);
       socket.userId = userId;
-
+      console.log("===========userSocketMap", JSON.stringify(userSocketMap, null, 2));
+      global.userSocketMap = userSocketMap;
       await emitGamesList();
     });
 
