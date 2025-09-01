@@ -33,7 +33,7 @@ exports.createPayment = async (req) => {
     });
 
     payment.screenshot = payment.screenshot.replace(
-          "/root/www/indianludoking.com/starludo",
+          "/www/indianludoking.com/starludo",
           ""
         );
 
