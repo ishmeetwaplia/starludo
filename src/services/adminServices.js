@@ -317,6 +317,7 @@ exports.banUnbanUser = async (userId, isBanned) => {
     }
 
     user.isBanned = isBanned;
+    user.token = null;
     await user.save();
 
     return {
