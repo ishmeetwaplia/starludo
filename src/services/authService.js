@@ -214,6 +214,14 @@ exports.login = async (req) => {
       };
     }
 
+    if (user.isBanned) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "User is banned",
+      };
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return {
