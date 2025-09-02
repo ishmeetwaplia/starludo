@@ -33,7 +33,7 @@ exports.createPayment = async (req) => {
     });
 
     payment.screenshot = payment.screenshot.replace(
-          "/www/wwwroot/default/ludo_backend",
+          "/www/indianludoking.com/starludo",
           ""
         );
 

@@ -760,7 +760,7 @@ exports.getAllPayments = async (query) => {
       const obj = p.toObject();
       if (obj.screenshot) {
         obj.screenshot = obj.screenshot.replace(
-          "/root/www/indianludoking.com/starludo",
+          "/www/indianludoking.com/starludo",
           ""
         );
       }

@@ -2,7 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const rootUploadPath = path.join(__dirname, "..", "..", "uploads");
+const rootUploadPath = "/www/indianludoking.com/starludo/uploads";
 
 function ensureDirSync(dir) {
   if (!fs.existsSync(dir)) {
