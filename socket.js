@@ -184,11 +184,20 @@ function initSocket(server) {
       try {
         if (!["approved", "rejected", "pending"].includes(status)) return;
 
-        const payment = await Payment.findById(paymentId).populate("userId", "username");
+        const payment = await Payment.findById(paymentId).populate("userId", "username credit");
         if (!payment) return;
 
         payment.status = status;
         await payment.save();
+        if (status === "approved" && payment.userId) {
+          const user = payment.userId;
+          const currentCredit = parseFloat(user.credit || "0"); // convert string to number
+          const newCredit = currentCredit + payment.amount;
+
+          // save back as string
+          user.credit = newCredit.toString();
+          await user.save();
+        }
 
         const userSockets = userSocketMap[payment.userId._id.toString()] || [];
         userSockets.forEach(socketId => {
