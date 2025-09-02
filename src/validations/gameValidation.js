@@ -8,9 +8,7 @@ exports.createBet = Joi.object({
     "any.required": "Bet amount is required"
   }),
   roomId: Joi.string()
-    .integer()
-    .min(10000000)
-    .max(99999999)
+    .pattern(/^[0-9]{8}$/)
     .required()
     .messages({
       "number.base": "Room ID must be a number",
