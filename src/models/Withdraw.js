@@ -10,6 +10,9 @@ const WithdrawSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  userAmount: {
+    type: Number
+  },
   upiId: {
     type: String,
     trim: true
