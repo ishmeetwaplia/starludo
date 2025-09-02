@@ -843,7 +843,7 @@ exports.getUserPayments = async (userId, query) => {
       const obj = p.toObject();
       if (obj.screenshot) {
         obj.screenshot = obj.screenshot.replace(
-          "/www/wwwroot/default/ludo_backend",
+          "/www/indianludoking.com/starludo",
           ""
         );
       }
