@@ -11,9 +11,7 @@ exports.createBet = Joi.object({
     .pattern(/^[0-9]{8}$/)
     .required()
     .messages({
-      "number.base": "Room ID must be a number",
-      "number.min": "Room ID must be exactly 8 digits",
-      "number.max": "Room ID must be exactly 8 digits",
+      "string.pattern.base": "Room ID must be exactly 8 digits",
       "any.required": "Room ID is required"
     })
 });
