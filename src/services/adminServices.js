@@ -987,6 +987,14 @@ exports.approveWithdraw = async (withdrawId, status) => {
 
     const oldWinningAmount = Number(user.winningAmount) || 0;
     const deductAmount = Number(withdraw.amount) || 0;
+
+    if (oldWinningAmount < deductAmount) {
+      return {
+        message: "User does not have sufficient winning balance currently",
+        withdraw
+      };
+    }
+
     const newWinningAmount = oldWinningAmount - deductAmount < 0 ? 0 : oldWinningAmount - deductAmount;
 
     user.winningAmount = String(newWinningAmount);
