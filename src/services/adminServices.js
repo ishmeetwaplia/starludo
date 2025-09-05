@@ -1184,3 +1184,35 @@ exports.decideGame = async (gameId, winnerId) => {
     };
   }
 };
+
+exports.changeUserPassword = async (req) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    const userData = await User.findById(id);
+    if (!userData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    userData.password = hashedPassword;
+    await userData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Password_changed_successfully
+    }
+   } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};

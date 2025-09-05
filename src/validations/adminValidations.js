@@ -51,7 +51,7 @@ const getAllGamesSchema = Joi.object({
 });
 
 const addCreditSchema = Joi.object({
-  credit: Joi.number().min(1).required() 
+  credit: Joi.number().min(1).required()
 });
 
 const getUserGameStatsQuerySchema = Joi.object({
@@ -131,6 +131,16 @@ const decideGameSchema = Joi.object({
   })
 });
 
+const changeUserPasswordSchema = Joi.object({
+  newPassword: Joi.string()
+    .min(6)
+    .optional()
+    .messages({
+      "string.empty": "Password cannot be empty",
+      "string.min": "Password must be at least 6 characters long",
+    }),
+});
+
 module.exports = {
   loginSchema,
   createUserSchema,
@@ -149,4 +159,5 @@ module.exports = {
   approveWithdrawSchema,
   getFilteredGamesSchema,
   decideGameSchema,
+  changeUserPasswordSchema
 };

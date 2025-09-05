@@ -1,4 +1,5 @@
 const adminService = require('../services/adminServices');
+const { statusCode } = require('../config/constant')
 
 exports.loginAdmin = async (req) => {
   const result = await adminService.login(req.body);
@@ -117,4 +118,16 @@ exports.decideGame = async (req, res) => {
   const { gameId, winnerId } = req.body;
   const result = await adminService.decideGame(gameId, winnerId);
   return result;
+};
+
+exports.changeUserPasswordController = async (req) => {
+    try {
+        return await adminService.changeUserPassword(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
 };

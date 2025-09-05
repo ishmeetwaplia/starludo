@@ -19,6 +19,7 @@ const {
   approveWithdrawSchema,
   getFilteredGamesSchema,
   decideGameSchema,
+  changeUserPasswordSchema
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -48,6 +49,7 @@ router.put("/users/:id/credit", protect, validate(addCreditSchema), responseHand
 router.get("/users/:id/games", protect,  validate(getUserGameStatsQuerySchema, "query"), responseHandler(adminController.getUserGameStats));
 router.get( "/users/:id/payments", protect ,responseHandler( adminController.getUserPayments));
 router.get( "/users/:id/withdraws", protect, responseHandler(adminController.getUserWithdraws));
+router.post('/user/:id/change-password', protect, validate(changeUserPasswordSchema), responseHandler(adminController.changeUserPasswordController));
 
 //Admin -> game 
 router.get("/games", protect, validate(getAllGamesSchema, "query"), responseHandler(adminController.getAllGames));

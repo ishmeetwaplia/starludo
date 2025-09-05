@@ -10,7 +10,7 @@ const statusCode = {
 
 const resMessage = {
     USER_MODEL_NOT_INITIALIZED: "user database issue",
-    Server_error:"SERVER ERROR",
+    Server_error: "SERVER ERROR",
     OTP_SENT: "OTP sent successfully",
     User_not_found: "User not found",
     Invalid_or_expired_OTP: "Invalid or expired OTP",
@@ -34,11 +34,11 @@ const resMessage = {
     USER_CREATED: "User created successfully",
     USER_NOT_FOUND: "User not found",
     USER_DELETED: "User deleted successfully",
-    USER_UPDATED : "User updated successfully",
-    USER_BANNED : "User has been banned",
-    USER_UNBANNED : "User has been unbanned",
-    KYC_UPDATED : "KYC status updated successfully",
-    USER_FETCHED: "User fetched successfully",      
+    USER_UPDATED: "User updated successfully",
+    USER_BANNED: "User has been banned",
+    USER_UNBANNED: "User has been unbanned",
+    KYC_UPDATED: "KYC status updated successfully",
+    USER_FETCHED: "User fetched successfully",
     USERS_FETCHED: "All users fetched successfully",
     No_pending_game_found_for_this_user: "No pending game found for this user",
     Room_id_created_successfully: "Room id created successfully",
@@ -61,8 +61,9 @@ const resMessage = {
     Review_list_retrieved_successfully: "Review list retrieved successfully",
     No_reviews_found: "No reviews found",
     Review_stats_retrieved_successfully: "Review stats retrieved successfully",
-    Room_id_already_exists: "Room ID already exists. Please choose a different Room ID."
-    };
+    Room_id_already_exists: "Room ID already exists. Please choose a different Room ID.",
+    Password_changed_successfully: "Password changed successfully",
+};
 
 module.exports = {
     statusCode,
