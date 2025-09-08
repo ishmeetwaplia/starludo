@@ -60,3 +60,27 @@ exports.loginController = async (req) => {
         };
     }
 };
+
+exports.forgotPasswordController = async (req) => {
+    try {
+        return await service.forgotPassword(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+};
+
+exports.verifyForgotPasswordController = async (req) => {
+    try {
+        return await service.verifyForgotPassword(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+};

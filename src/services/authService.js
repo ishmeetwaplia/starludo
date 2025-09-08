@@ -6,7 +6,7 @@ const FUNC = require('../functions/function');
 
 exports.register = async (req) => {
   try {
-    const { phone, username, password } = req.body;
+    const { phone, username, password, securityQuestions } = req.body;
 
     let user = await User.findOne({ phone });
     if (user) {
@@ -34,6 +34,7 @@ exports.register = async (req) => {
       username,
       password: hashedPassword,
       isRegistered: true,
+      securityQuestions
     });
 
     await user.save();
@@ -142,7 +143,7 @@ exports.password = async (req, res) => {
     const token = jwt.sign({ id: user._id, phone: user.phone }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    
+
     user.referBy = existingRefer ? existingRefer._id : null;
     user.token = token;
     user.username = FUNC.generateUsername();
@@ -256,3 +257,84 @@ exports.login = async (req) => {
   }
 };
 
+exports.forgotPassword = async (req) => {
+  try {
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+
+    if (!user)
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.USER_NOT_FOUND
+      }
+
+    const randomIndex = Math.floor(Math.random() * user.securityQuestions.length);
+    const question = user.securityQuestions[randomIndex];
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      data: {
+        question: question.question,
+        index: randomIndex
+      }
+    }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+}
+
+exports.verifyForgotPassword = async (req) => {
+  try {
+    const { username, index, answer, newPassword } = req.body;
+
+    if (!username || index === undefined || !answer || !newPassword) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Username, question index, answer and new password are required",
+      };
+    }
+
+    const user = await User.findOne({ username }).select("+password");
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.User_not_found || "User not found",
+      };
+    }
+
+    // 🔹 Verify security answer
+    const isMatch = await user.verifyAnswer(index, answer);
+    if (!isMatch) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "Security answer is incorrect",
+      };
+    }
+
+    // 🔹 Hash new password before saving
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Password updated successfully",
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+    };
+  }
+}

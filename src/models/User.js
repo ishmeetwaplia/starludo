@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
   referBy: {
@@ -96,6 +97,27 @@ const UserSchema = new mongoose.Schema({
     ref: "User",
     default: null
   },
+  securityQuestions: [
+    {
+      question: { type: String, required: true },
+      answer: { type: String, required: true }
+    }
+  ]
 }, { timestamps: true, versionKey: false });
+
+UserSchema.pre("save", async function (next) {
+  if (this.isModified("securityQuestions")) {
+    for (let q of this.securityQuestions) {
+      if (!q.answer.startsWith("$2a$") && !q.answer.startsWith("$2b$")) {
+        q.answer = await bcrypt.hash(q.answer, 10);
+      }
+    }
+  }
+  next();
+});
+
+UserSchema.methods.verifyAnswer = async function (index, answer) {
+  return bcrypt.compare(answer, this.securityQuestions[index].answer);
+};
 
 module.exports = mongoose.model("User", UserSchema);

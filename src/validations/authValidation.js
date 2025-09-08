@@ -44,6 +44,13 @@ exports.register = Joi.object({
       "string.empty": "Password cannot be empty",
       "string.min": "Password must be at least 6 characters long",
     }),
+
+  securityQuestions: Joi.array().items(
+    Joi.object({
+      question: Joi.string().required(),
+      answer: Joi.string().required(),
+    })
+  ).optional(),
 });
 
 exports.verifyOTP = Joi.object({
@@ -111,3 +118,47 @@ exports.login = Joi.object({
   }),
 });
 
+exports.forgotPassword = Joi.object({
+  username: Joi.string().trim().required().messages({
+    "any.required": "Username is required",
+    "string.empty": "Username cannot be empty",
+  })
+});
+
+exports.verifyForgotPassword = Joi.object({
+  username: Joi.string()
+    .trim()
+    .required()
+    .messages({
+      "any.required": "Username is required",
+      "string.empty": "Username cannot be empty",
+    }),
+
+  index: Joi.number()
+    .integer()
+    .min(0)
+    .required()
+    .messages({
+      "any.required": "Security question index is required",
+      "number.base": "Index must be a number",
+      "number.min": "Index cannot be negative",
+    }),
+
+  answer: Joi.string()
+    .trim()
+    .required()
+    .messages({
+      "any.required": "Answer is required",
+      "string.empty": "Answer cannot be empty",
+    }),
+
+  newPassword: Joi.string()
+    .trim()
+    .min(6)
+    .required()
+    .messages({
+      "any.required": "New password is required",
+      "string.empty": "New password cannot be empty",
+      "string.min": "New password must be at least 6 characters long",
+    }),
+});
