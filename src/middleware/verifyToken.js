@@ -46,7 +46,7 @@ exports.verifyToken = async (req, res, next) => {
     req.auth = user;
     next();
   } catch (error) {
-    return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+    return res.status(statusCode.UNAUTHORIZED).json({
       success: false,
       message: error.message,
     });
