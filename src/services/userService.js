@@ -148,12 +148,12 @@ exports.getCredit = async (req) => {
         message: resMessage.User_not_found,
       };
     }
-
+    const amount = user.credit + user.referralEarning;
     return {
       status: statusCode.OK,
       success: true,
       message: "Credit fetched successfully",
-      data: { credit: user.credit || 0 },
+      data: { credit: amount || 0 },
     };
   } catch (error) {
     return {
