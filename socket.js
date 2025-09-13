@@ -103,15 +103,27 @@ function initSocket(server) {
     // Accept game request
     socket.on("accept_game_request", async ({ gameId, userId }) => {
       try {
-        const game = await Game.findByIdAndUpdate(
+        const game = await Game.findById(gameId).populate("createdBy", "username");
+        if (!game) return;
+
+        const acceptingUser = await User.findById(userId);
+        if (!acceptingUser) {
+          return 
+        }
+
+        if ((Number(acceptingUser.credit || 0) + Number(acceptingUser.referralEarning || 0)) < Number(game.betAmount || 0)) {
+          return; 
+        }
+
+        const updatedGame = await Game.findByIdAndUpdate(
           gameId,
           { status: "requested", acceptedBy: userId },
           { new: true }
         ).populate("createdBy", "username");
 
-        if (!game) return;
+        if (!updatedGame) return;
 
-        const creatorSockets = userSocketMap[game.createdBy._id.toString()] || [];
+        const creatorSockets = userSocketMap[updatedGame.createdBy._id.toString()] || [];
         creatorSockets.forEach(socketId => {
           io.to(socketId).emit("game_accepted", {
             gameId,
