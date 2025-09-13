@@ -18,7 +18,7 @@ exports.createBet = async (req) => {
       };
     }
 
-    if (user.credit < betAmount) {
+    if ((user.credit + user.referralEarning) < betAmount) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,

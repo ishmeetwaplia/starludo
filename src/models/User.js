@@ -49,8 +49,8 @@ const UserSchema = new mongoose.Schema({
     default: "0"
   },
   referralEarning: {
-    type: String,
-    default: "0"
+    type: Number,
+    default: 0
   },
   penalty: {
     type: String,

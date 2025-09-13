@@ -6,7 +6,7 @@ const FUNC = require('../functions/function');
 
 exports.register = async (req) => {
   try {
-    const { phone, username, password, securityQuestions } = req.body;
+    const { phone, username, password, securityQuestions, referralCode } = req.body;
 
     let user = await User.findOne({ phone });
     if (user) {
@@ -29,13 +29,25 @@ exports.register = async (req) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    user = new User({
+    const newUserData = {
       phone,
       username,
       password: hashedPassword,
       isRegistered: true,
       securityQuestions
-    });
+    };
+
+    if (referralCode) {
+      const referringUser = await User.findOne({ referCode: referralCode });
+      if (referringUser) {
+        newUserData.referredBy = referringUser._id;
+      }
+    }
+
+    const uniqueReferCode = await FUNC.generateUniqueReferCode(8);
+    newUserData.referCode = uniqueReferCode;
+
+    user = new User(newUserData);
 
     await user.save();
 

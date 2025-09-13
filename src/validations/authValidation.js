@@ -45,12 +45,23 @@ exports.register = Joi.object({
       "string.min": "Password must be at least 6 characters long",
     }),
 
-  securityQuestions: Joi.array().items(
-    Joi.object({
-      question: Joi.string().required(),
-      answer: Joi.string().required(),
-    })
-  ).optional(),
+  securityQuestions: Joi.array()
+    .items(
+      Joi.object({
+        question: Joi.string().required(),
+        answer: Joi.string().required(),
+      })
+    )
+    .optional(),
+
+  referralCode: Joi.string()
+    .alphanum()
+    .trim()
+    .optional()
+    .messages({
+      "string.alphanum": "Referral code must be alphanumeric",
+      "string.empty": "Referral code cannot be empty",
+    }),
 });
 
 exports.verifyOTP = Joi.object({
