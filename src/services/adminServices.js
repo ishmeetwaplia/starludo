@@ -1167,6 +1167,16 @@ exports.decideGame = async (gameId, winnerId) => {
       const addAmount = Number(game.winningAmount) || 0;
       user.winningAmount = String(oldAmount + addAmount);
       await user.save();
+
+      if (user.referredBy) {
+        const referrer = await User.findById(user.referredBy).select("-token -password");
+        if (referrer && referrer.isActive && !referrer.isBanned) {
+          const bet = Number(game.betAmount) || 0;
+          const referBonus = 0.02 * (2 * bet); 
+          referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
+          await referrer.save();
+        }
+      }
     }
 
     return {

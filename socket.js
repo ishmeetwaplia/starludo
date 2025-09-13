@@ -274,6 +274,16 @@ function initSocket(server) {
           const newAmount = (Number(user.winningAmount) || 0) + Number(game.winningAmount || 0);
           user.winningAmount = String(newAmount);
           await user.save();
+
+          if (user.referredBy) {
+            const referrer = await User.findById(user.referredBy);
+            if (referrer && referrer.isActive && !referrer.isBanned) {
+              const bet = Number(game.betAmount) || 0;
+              const referBonus = 0.02 * (2 * bet);
+              referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
+              await referrer.save();
+            }
+          }
         }
       } catch (error) {
         console.error("Error in admin_winner_decision:", error);
