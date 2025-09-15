@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const Payment = require("../models/Payment");
 const Withdraw = require("../models/Withdraw")
+const functions = require("../functions/function"); 
 
 exports.login = async ({ email, password }) => {
   try {
@@ -1175,6 +1176,19 @@ exports.decideGame = async (gameId, winnerId) => {
           const referBonus = 0.02 * (2 * bet); 
           referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
           await referrer.save();
+
+          try {
+            await functions.recordReferralWin({
+              winnerId: user._id,
+              referredById: referrer._id,
+              gameId: game._id,
+              winningAmount: Number(game.winningAmount) || 0,
+              betAmount: Number(game.betAmount) || 0,  
+              roomId: game.roomId || null
+            });
+          } catch (recErr) {
+            console.error("Failed to record referral in decideGame:", recErr);
+          }
         }
       }
     }

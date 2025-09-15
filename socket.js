@@ -3,6 +3,7 @@ const Game = require("./src/models/Game");
 const Payment = require("./src/models/Payment");
 const User = require("./src/models/User");
 const Withdraw = require("./src/models/Withdraw");
+const functions = require("./src/functions/function");
 
 function initSocket(server) {
   const io = new Server(server, {
@@ -282,6 +283,19 @@ function initSocket(server) {
               const referBonus = 0.02 * (2 * bet);
               referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
               await referrer.save();
+
+              try {
+                await functions.recordReferralWin({
+                  winnerId: user._id,
+                  referredById: referrer._id,
+                  gameId: game._id,
+                  winningAmount: Number(game.winningAmount) || 0,
+                  betAmount: Number(game.betAmount) || 0,    // <--- added
+                  roomId: game.roomId || null
+                });
+              } catch (e) {
+                console.error("Failed to record referral in socket handler:", e);
+              }
             }
           }
         }
