@@ -16,5 +16,6 @@ router.get("/payments", verifyToken, responseHandler(controller.getUserPaymentsC
 router.post("/withdraw", verifyToken, responseHandler(controller.createWithdrawController));
 router.get("/withdraw-history", verifyToken, responseHandler(controller.withdrawHistoryController));
 router.post("/reset-password", verifyToken, responseHandler(controller.resetPasswordController));
+router.get("/referral-earning-history", verifyToken, responseHandler(controller.getReferralsController));
 
 module.exports = router;

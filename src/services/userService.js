@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Payment = require('../models/Payment');
 const Withdraw = require("../models/Withdraw");
 const bcrypt = require("bcryptjs");
+const Referral = require("../models/Referral");
+const mongoose = require("mongoose");
 
 exports.profile = async (req) => {
   try {
@@ -380,6 +382,154 @@ exports.resetPassword = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message,
+    };
+  }
+};
+
+exports.getReferrals = async (req) => {
+  try {
+    const { _id: currentUserId } = req.auth;
+    let {
+      page = 1,
+      limit = 10,
+      search,
+      winningMin,
+      winningMax,
+      referralMin,
+      referralMax,
+      fromDate,
+      toDate,
+    } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+    const skip = (page - 1) * limit;
+    const baseMatch = { referred_by: new mongoose.Types.ObjectId(String(currentUserId)) };
+    const pipeline = [
+      { $match: baseMatch },
+      {
+        $lookup: {
+          from: "users",
+          localField: "winner",
+          foreignField: "_id",
+          as: "winner"
+        }
+      },
+      { $unwind: "$winner" }
+    ];
+
+    if (search && String(search).trim().length > 0) {
+      pipeline.push({
+        $match: {
+          "winner.username": { $regex: String(search).trim(), $options: "i" }
+        }
+      });
+    }
+
+    pipeline.push({ $unwind: "$wins" });
+    const winFilters = [];
+
+    if (winningMin !== undefined) {
+      const v = Number(winningMin);
+      if (!Number.isNaN(v)) {
+        winFilters.push({ "wins.winningAmount": { $gte: v } });
+      } 
+    }
+    if (winningMax !== undefined) {
+      const v = Number(winningMax);
+      if (!Number.isNaN(v)) {
+        winFilters.push({ "wins.winningAmount": { $lte: v } });
+      }
+    }
+
+    if (referralMin !== undefined) {
+      const v = Number(referralMin);
+      if (!Number.isNaN(v)) {
+        winFilters.push({ "wins.referralEarning": { $gte: v } });
+      }
+    }
+    if (referralMax !== undefined) {
+      const v = Number(referralMax);
+      if (!Number.isNaN(v)) {
+        winFilters.push({ "wins.referralEarning": { $lte: v } });
+      }
+    }
+
+    if (fromDate) {
+      const d = new Date(fromDate);
+      if (!Number.isNaN(d.getTime())) {
+        winFilters.push({ "wins.createdAt": { $gte: d } });
+      }
+    }
+    if (toDate) {
+      const d = new Date(toDate);
+      if (!Number.isNaN(d.getTime())) {
+        winFilters.push({ "wins.createdAt": { $lte: d } });
+      }
+    }
+
+    if (winFilters.length > 0) {
+      pipeline.push({ $match: { $and: winFilters } });
+    }
+
+    pipeline.push({
+      $group: {
+        _id: "$_id",
+        winner: { $first: "$winner" },
+        referred_by: { $first: "$referred_by" },
+        wins: { $push: "$wins" },
+        createdAt: { $first: "$createdAt" },
+        updatedAt: { $first: "$updatedAt" }
+      }
+    });
+
+    pipeline.push({ $sort: { createdAt: -1 } });
+
+    pipeline.push({
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "total" }]
+      }
+    });
+
+    const result = await Referral.aggregate(pipeline);
+
+    const data = (result[0] && result[0].data) || [];
+    const total = (result[0] && result[0].totalCount && result[0].totalCount[0] && result[0].totalCount[0].total) || 0;
+
+    const items = data.map((doc) => ({
+      id: doc._id,
+      winner: {
+        _id: doc.winner._id,
+        username: doc.winner.username,
+        profile: doc.winner.profile || null
+      },
+      referred_by: doc.referred_by,
+      wins: doc.wins,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt
+    }));
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: "Referrals fetched successfully",
+      data: {
+        items,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    };
+  } catch (error) {
+    console.error("[getReferrals] error:", error);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
     };
   }
 };
