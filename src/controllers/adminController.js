@@ -131,3 +131,15 @@ exports.changeUserPasswordController = async (req) => {
         };
     }
 };
+
+exports.getAllReferralsController = async (req) => {
+  try {
+    return await adminService.getAllReferrals(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};

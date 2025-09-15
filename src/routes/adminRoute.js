@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const { responseHandler } = require('../middleware/responseHandler');
 const validate = require('../middleware/validate');
 const upload = require('../middleware/upload');
+
 const {
   loginSchema,
   createUserSchema,
@@ -19,7 +20,8 @@ const {
   approveWithdrawSchema,
   getFilteredGamesSchema,
   decideGameSchema,
-  changeUserPasswordSchema
+  changeUserPasswordSchema,
+  getAllReferralsSchema
 } = require('../validations/adminValidations');
 
 const router = express.Router();
@@ -62,5 +64,8 @@ router.patch( "/payments/:id/approve", protect, validate(approvePaymentSchema), 
 
 router.get( '/withdraws', protect, validate(getAllWithdrawsSchema, 'query'), responseHandler(adminController.getAllWithdraws));
 router.patch( "/withdraws/:id/approve", protect, validate(approveWithdrawSchema), responseHandler(adminController.approveWithdraw));
+
+//Admin -> referrals
+router.get("/referrals", protect, validate(getAllReferralsSchema), responseHandler(adminController.getAllReferralsController));
 
 module.exports = router;

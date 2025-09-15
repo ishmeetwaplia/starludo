@@ -111,6 +111,14 @@ const getAllWithdrawsSchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).optional(),
 });
 
+const getAllReferralsSchema = Joi.object({
+  search: Joi.string().trim().optional(),
+  minWinningAmount: Joi.number().integer().min(0).optional(),
+  maxWinningAmount: Joi.number().integer().min(0).optional(),
+  page: Joi.number().integer().min(1).optional(),
+  limit: Joi.number().integer().min(1).max(100).optional(),
+});
+
 const approveWithdrawSchema = Joi.object({
   status: Joi.string().valid('paid', 'rejected').required()
 });
@@ -159,5 +167,6 @@ module.exports = {
   approveWithdrawSchema,
   getFilteredGamesSchema,
   decideGameSchema,
-  changeUserPasswordSchema
+  changeUserPasswordSchema,
+  getAllReferralsSchema
 };

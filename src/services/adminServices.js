@@ -8,6 +8,8 @@ const path = require("path");
 const Payment = require("../models/Payment");
 const Withdraw = require("../models/Withdraw")
 const functions = require("../functions/function"); 
+const Referral = require("../models/Referral");
+const mongoose = require("mongoose");
 
 exports.login = async ({ email, password }) => {
   try {
@@ -1237,6 +1239,85 @@ exports.changeUserPassword = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message || resMessage.Server_error
+    };
+  }
+};
+
+exports.getAllReferrals = async (query) => {
+  try {
+    const {
+      search,          
+      minWinningAmount, 
+      maxWinningAmount, 
+      page = 1,
+      limit = 10
+    } = query;
+
+    let referrals = await Referral.find()
+      .populate("winner", "_id username")
+      .populate("referred_by", "_id username")
+      .populate("wins.game", "winningAmount") 
+      .sort({ createdAt: -1 });
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      referrals = referrals.filter(
+        (r) =>
+          r.winner?.username?.toLowerCase().includes(searchLower) ||
+          r.referred_by?.username?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (minWinningAmount || maxWinningAmount) {
+      referrals = referrals.filter((r) =>
+        r.wins.some((win) => {
+          const amount = win.winningAmount || 0;
+          if (minWinningAmount && maxWinningAmount) {
+            return amount >= Number(minWinningAmount) && amount <= Number(maxWinningAmount);
+          } else if (minWinningAmount) {
+            return amount >= Number(minWinningAmount);
+          } else if (maxWinningAmount) {
+            return amount <= Number(maxWinningAmount);
+          }
+          return true;
+        })
+      );
+    }
+
+    const total = referrals.length;
+    const skip = (page - 1) * limit;
+    const paginated = referrals.slice(skip, skip + Number(limit));
+
+    const data = paginated.map((r) => ({
+      winner: r.winner,
+      referred_by: r.referred_by,
+      wins: r.wins.map((win) => ({
+        gameId: win.game?._id,
+        winningAmount: win.winningAmount,
+        referralEarning: win.referralEarning,
+        roomId: win.roomId,
+        createdAt: win.createdAt
+      })),
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt
+    }));
+
+    return {
+      success: true,
+      status: statusCode.OK,
+      message: "Referral data fetched successfully",
+      data: {
+        referrals: data,
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit)
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      message: error.message
     };
   }
 };
