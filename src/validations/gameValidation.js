@@ -13,7 +13,7 @@ exports.submitWinning = Joi.object({
   gameId: Joi.string().required().messages({
     "any.required": "Game ID is required"
   }),
-  result: Joi.string().valid("won", "lost").required().messages({
+  result: Joi.string().valid("won", "lost" , "cancel").required().messages({
     "any.required": "Result is required",
     "any.only": "Result must be either 'won' or 'lost'"
   })
