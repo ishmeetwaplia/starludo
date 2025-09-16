@@ -160,8 +160,11 @@ function initSocket(server) {
     });
 
     // Start game
-    socket.on("start_game", async (gameId) => {
+    socket.on("start_game", async (startGamePayload) => {
       try {
+        const gameId =startGamePayload?._id;
+        const incomingRoomId = startGamePayload?.roomId || null;
+
         const game = await Game.findById(gameId)
           .populate("createdBy", "_id username credit")
           .populate("acceptedBy", "_id username credit");
@@ -172,7 +175,7 @@ function initSocket(server) {
         accepterSockets.forEach(socketId => {
           io.to(socketId).emit("start_game", {
             gameId,
-            roomId: game.roomId,
+            roomId: incomingRoomId,
             message: "The creator has started the game.",
           });
         });
@@ -183,7 +186,7 @@ function initSocket(server) {
           User.findByIdAndUpdate(game.acceptedBy._id, { $inc: { credit: -betAmount } }),
         ]);
 
-        await Game.findByIdAndUpdate(gameId, { status: "started" });
+        await Game.findByIdAndUpdate(gameId, { status: "started", roomId: incomingRoomId ? String(incomingRoomId) : null });
 
         await emitGamesList();
         await emitLiveGames();

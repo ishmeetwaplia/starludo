@@ -6,7 +6,7 @@ const path = require("path");
 exports.createBet = async (req) => {
   try {
     const { _id } = req.auth;
-    const { betAmount, roomId } = req.body;
+    const { betAmount } = req.body;
 
     const user = await User.findById(_id);
 
@@ -26,15 +26,6 @@ exports.createBet = async (req) => {
       };
     }
 
-    const roomExists = await Game.findOne({ roomId });
-    if (roomExists) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: resMessage.Room_id_already_exists
-      };
-    }
-
     const existingGame = await Game.findOne({
       createdBy: _id,
       status: { $in: ["pending", "requested", "started"] }
@@ -48,24 +39,9 @@ exports.createBet = async (req) => {
       };
     }
 
-    if (roomId) {
-      const existingRoomGame = await Game.findOne({
-        roomId,
-        status: { $nin: ["completed", "cancelled", "expired", "quit"] }
-      });
-
-      if (existingRoomGame) {
-        return {
-          status: statusCode.BAD_REQUEST,
-          success: false,
-          message: "This room already has an active game."
-        };
-      }
-    }
-
     const winningAmount = Math.floor(2 * betAmount);
 
-    const game = await Game.create({ createdBy: _id, betAmount, winningAmount, roomId });
+    const game = await Game.create({ createdBy: _id, betAmount, winningAmount });
     global.io.emit("new_bet", game);
 
     const updatedGames = await Game.find({ status: { $in: ["pending", "requested"] } }).populate("createdBy", "username credit");

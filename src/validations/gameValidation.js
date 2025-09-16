@@ -6,14 +6,7 @@ exports.createBet = Joi.object({
     "number.min": "Bet must be at least 10 credits",
     "number.max": "Bet cannot exceed 25000 credits",
     "any.required": "Bet amount is required"
-  }),
-  roomId: Joi.string()
-    .pattern(/^[0-9]{8}$/)
-    .required()
-    .messages({
-      "string.pattern.base": "Room ID must be exactly 8 digits",
-      "any.required": "Room ID is required"
-    })
+  })
 });
 
 exports.submitWinning = Joi.object({
