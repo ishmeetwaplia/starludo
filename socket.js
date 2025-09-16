@@ -180,12 +180,33 @@ function initSocket(server) {
 
         if (!game || !game.acceptedBy) return;
 
-        const accepterSockets = userSocketMap[game.acceptedBy._id.toString()] || [];
-        accepterSockets.forEach(socketId => {
+        if (incomingRoomId) {
+          const existing = await Game.findOne({ roomId: incomingRoomId }).select("_id");
+          if (existing && existing._id.toString() !== String(gameId)) {
+            console.warn(`start_game aborted: roomId ${incomingRoomId} already in use by game ${existing._id}`);
+            const createrSockets = userSocketMap[game.createdBy._id.toString()] || [];
+            createrSockets.forEach(socketId => {
+              io.to(socketId).emit("invalid_game", {
+                gameId,
+                roomId: incomingRoomId,
+                message: "Invalid game: roomId already in use.",
+              });
+            });
+            return; 
+          }
+        }
+
+        const socketsToNotify = [
+          ...(userSocketMap[game.acceptedBy._id.toString()] || []),
+          ...(userSocketMap[game.createdBy._id.toString()] || []),
+        ];
+
+        socketsToNotify.forEach(socketId => {
+          const isCreator = socketId === game.createdBy._id.toString();
           io.to(socketId).emit("start_game", {
             gameId,
             roomId: incomingRoomId,
-            message: "The creator has started the game.",
+            message: isCreator ? "You started the game." : "The creator has started the game.",
           });
         });
 

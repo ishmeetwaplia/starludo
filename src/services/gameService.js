@@ -228,7 +228,11 @@ exports.getUserGameHistory = async (req) => {
 
     history = history.map((game) => {
       const gameObj = game.toObject();
-      gameObj.decision = game.winner?.toString() === _id.toString() ? "win" : "lost";
+      if (!game.winner) {
+        gameObj.decision = null;
+      } else {
+        gameObj.decision = game.winner.toString() === _id.toString() ? "win" : "lost";
+      }
       return gameObj;
     });
 
