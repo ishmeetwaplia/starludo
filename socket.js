@@ -139,8 +139,12 @@ function initSocket(server) {
     });
 
     // Cancel game request
-    socket.on("cancel_game_request", async (gameId) => {
+    socket.on("cancel_game_request", async (gameData) => {
       try {
+        const gameId = gameData?._id;
+        const userId = gameData?.userId || null;
+        if (!gameId || !userId) return;
+
         const game = await Game.findById(gameId).populate("acceptedBy", "_id username");
         if (!game || !game.acceptedBy) return;
 
@@ -152,7 +156,12 @@ function initSocket(server) {
           });
         });
 
-        await Game.findByIdAndUpdate(gameId, { status: "cancelled", acceptedBy: null });
+        if (game.createdBy.toString() === userId) {
+          await Game.findByIdAndUpdate(gameId, { status: "cancelled"});
+        } else if (game.acceptedBy && game.acceptedBy._id.toString() === userId) {
+          await Game.findByIdAndUpdate(gameId, { status: "pending", acceptedBy: null });
+        }
+
         await emitGamesList();
       } catch (error) {
         console.error("Error canceling game request:", error);
