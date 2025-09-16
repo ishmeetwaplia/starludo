@@ -15,6 +15,6 @@ exports.submitWinning = Joi.object({
   }),
   result: Joi.string().valid("won", "lost" , "cancel").required().messages({
     "any.required": "Result is required",
-    "any.only": "Result must be either 'won' or 'lost'"
+    "any.only": "Result must be either 'won' or 'lost' or 'cancel'"
   })
 });
