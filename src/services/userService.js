@@ -369,7 +369,7 @@ exports.resetPassword = async (req) => {
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
-
+    user.token = null;
     await user.save();
 
     return {
