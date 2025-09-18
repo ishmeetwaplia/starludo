@@ -258,8 +258,11 @@ function initSocket(server) {
     });
 
     // Withdraw status update
-    socket.on("update_withdraw_status", async ({ withdrawId, status }) => {
+    socket.on("update_withdraw_status", async (withdrawData) => {
       try {
+        const withdrawId =withdrawData?.withdrawId;
+        const status = withdrawData?.status || null;
+        
         if (!["paid", "rejected"].includes(status)) return;
 
         const withdraw = await Withdraw.findById(withdrawId).populate("userId", "username winningAmount");
