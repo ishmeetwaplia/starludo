@@ -39,7 +39,7 @@ exports.createBet = async (req) => {
       };
     }
 
-    const winningAmount = Math.floor(2 * betAmount);
+    const winningAmount = Math.floor(2 * betAmount * 0.95);
 
     const game = await Game.create({ createdBy: _id, betAmount, winningAmount });
     global.io.emit("new_bet", game);

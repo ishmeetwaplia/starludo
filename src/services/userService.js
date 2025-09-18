@@ -279,7 +279,7 @@ exports.createWithdraw = async (req) => {
     const withdraw = new Withdraw({
       userId: _id,
       amount,
-      userAmount:  Number((amount * 0.95).toFixed(2)),
+      userAmount:  Number((amount).toFixed(2)),
       upiId,
       bankAccount,
       ifsc
