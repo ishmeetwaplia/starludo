@@ -226,8 +226,11 @@ function initSocket(server) {
     });
 
     // Payment status update
-    socket.on("update_payment_status", async ({ paymentId, status }) => {
+    socket.on("update_payment_status", async (paymentData) => {
       try {
+        const paymentId =paymentData?.paymentId;
+        const status = paymentData?.status || null;
+        
         if (!["approved", "rejected", "pending"].includes(status)) return;
 
         const payment = await Payment.findById(paymentId).populate("userId", "username credit");

@@ -5,6 +5,7 @@ const Withdraw = require("../models/Withdraw");
 const bcrypt = require("bcryptjs");
 const Referral = require("../models/Referral");
 const mongoose = require("mongoose");
+const Game = require("../models/Game");
 
 exports.profile = async (req) => {
   try {
@@ -17,11 +18,19 @@ exports.profile = async (req) => {
         message: resMessage.User_not_found
       };
     }
+
+    const playedGames = await Game.countDocuments({
+      $or: [{ createdBy: _id }, { acceptedBy: _id }]
+    });
+
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.Profile_fetched_successfully,
-      data: userInfo
+      data: {
+        ...userInfo.toObject(),
+        playedGames
+      }
     };
   } catch (error) {
     return {
@@ -30,7 +39,7 @@ exports.profile = async (req) => {
       message: error.message
     };
   }
-}
+};
 
 exports.logout = async (req, res) => {
   try {
