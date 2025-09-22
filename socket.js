@@ -102,8 +102,10 @@ function initSocket(server) {
     });
 
     // Accept game request
-    socket.on("accept_game_request", async ({ gameId, userId }) => {
+    socket.on("accept_game_request", async (gameInfo) => {   
       try {
+        const gameId = gameInfo?.gameId;
+        const userId = gameInfo?.userId || null;
         const game = await Game.findById(gameId).populate("createdBy", "username");
         if (!game) return;
 
@@ -289,8 +291,11 @@ function initSocket(server) {
     });
 
     // Admin winner decision
-    socket.on("admin_winner_decision", async ({ gameId, winner }) => {
+    socket.on("admin_winner_decision", async (gameObj) => { 
       try {
+        const gameId = gameObj?.gameId;
+        const winner = gameObj?.winner ?? null; 
+        
         const game = await Game.findById(gameId)
           .populate("createdBy", "_id username")
           .populate("acceptedBy", "_id username");
@@ -298,46 +303,64 @@ function initSocket(server) {
         if (!game) return socket.emit("error_message", { message: "Game not found" });
         if (game.adminstatus === "decided") return socket.emit("error_message", { message: "Game already decided" });
 
-        if (![game.createdBy._id.toString(), game.acceptedBy._id.toString()].includes(winner)) {
+        if (winner && ![game.createdBy._id.toString(), game.acceptedBy._id.toString()].includes(winner)) {
           return socket.emit("error_message", { message: "Winner must be one of the players" });
         }
 
-        const loserId = game.createdBy._id.toString() === winner ? game.acceptedBy._id : game.createdBy._id;
-        game.winner = winner;
-        game.loser = loserId;
-        game.adminstatus = "decided";
-        game.status = "completed";
-        await game.save();
+        if (!winner || winner === null || winner==="") {
+          
+          // Reject case: split winningAmount
+          const splitAmount = (Number(game.winningAmount || 0) / 2);
+          const users = [game.createdBy, game.acceptedBy];
+          for (let u of users) {
+            const user = await User.findById(u._id);
+            if (user) {
+              user.winningAmount = String((Number(user.winningAmount) || 0) + splitAmount);
+              await user.save();
+            }
+          }
+          game.winner = null;
+          game.loser = null;
+        } else {
+          // Normal winner case
+          const loserId = game.createdBy._id.toString() === winner ? game.acceptedBy._id : game.createdBy._id;
+          game.winner = winner;
+          game.loser = loserId;
 
-        const user = await User.findById(winner);
-        if (user) {
-          const newAmount = (Number(user.winningAmount) || 0) + Number(game.winningAmount || 0);
-          user.winningAmount = String(newAmount);
-          await user.save();
+          const user = await User.findById(winner);
+          if (user) {
+            user.winningAmount = String((Number(user.winningAmount) || 0) + Number(game.winningAmount || 0));
+            await user.save();
 
-          if (user.referredBy) {
-            const referrer = await User.findById(user.referredBy);
-            if (referrer && referrer.isActive && !referrer.isBanned) {
-              const bet = Number(game.betAmount) || 0;
-              const referBonus = 0.02 * (2 * bet);
-              referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
-              await referrer.save();
+            if (user.referredBy) {
+              const referrer = await User.findById(user.referredBy);
+              if (referrer && referrer.isActive && !referrer.isBanned) {
+                const bet = Number(game.betAmount) || 0;
+                const referBonus = 0.02 * (2 * bet);
+                referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
+                await referrer.save();
 
-              try {
-                await functions.recordReferralWin({
-                  winnerId: user._id,
-                  referredById: referrer._id,
-                  gameId: game._id,
-                  winningAmount: Number(game.winningAmount) || 0,
-                  betAmount: Number(game.betAmount) || 0,    // <--- added
-                  roomId: game.roomId || null
-                });
-              } catch (e) {
-                console.error("Failed to record referral in socket handler:", e);
+                try {
+                  await functions.recordReferralWin({
+                    winnerId: user._id,
+                    referredById: referrer._id,
+                    gameId: game._id,
+                    winningAmount: Number(game.winningAmount) || 0,
+                    betAmount: Number(game.betAmount) || 0,
+                    roomId: game.roomId || null
+                  });
+                } catch (e) {
+                  console.error("Failed to record referral in socket handler:", e);
+                }
               }
             }
           }
         }
+
+        game.adminstatus = "decided";
+        game.status = "completed";
+        await game.save();
+
       } catch (error) {
         console.error("Error in admin_winner_decision:", error);
       }

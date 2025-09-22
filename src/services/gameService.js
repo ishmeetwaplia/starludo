@@ -174,6 +174,7 @@ exports.submitWinning = async (req) => {
     }
 
     if (result === "cancel") {
+      
       game.status = "quit";
       game.loser = _id;
       await game.save();
@@ -189,6 +190,21 @@ exports.submitWinning = async (req) => {
         createdByUsername: game.createdBy?.username || null,
         acceptedByUsername: game.acceptedBy?.username || null
       };
+
+      if (global.io) {
+        try {
+          const admins = await User.find({ role: "admin" }).select("_id");
+          admins.forEach((admin) => {
+            const adminId = admin._id.toString();
+            const sockets = global.userSocketMap?.[adminId] || [];
+            sockets.forEach((socketId) => {
+              global.io.to(socketId).emit("game_over", socketGame);
+            });
+          });
+        } catch (err) {
+          console.error("Error notifying admins:", err);
+        }
+      }
 
       return {
         status: statusCode.OK,

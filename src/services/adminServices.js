@@ -1142,10 +1142,7 @@ exports.decideGame = async (gameId, winnerId) => {
       };
     }
 
-    if (
-      String(game.createdBy) !== String(winnerId) &&
-      String(game.acceptedBy) !== String(winnerId)
-    ) {
+    if (winnerId && String(game.createdBy) !== String(winnerId) && String(game.acceptedBy) !== String(winnerId)) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -1153,47 +1150,57 @@ exports.decideGame = async (gameId, winnerId) => {
       };
     }
 
-    const loserId =
-      String(game.createdBy) === String(winnerId)
-        ? game.acceptedBy
-        : game.createdBy;
+    if (!winnerId || winnerId === null || winnerId==="") {
+      
+      const splitAmount = (Number(game.winningAmount || 0) / 2);
+      const users = [game.createdBy, game.acceptedBy];
+      for (let u of users) {
+        const user = await User.findById(u).select("-token -password");
+        if (user) {
+          user.winningAmount = String((Number(user.winningAmount) || 0) + splitAmount);
+          await user.save();
+        }
+      }
+      game.winner = null;
+      game.loser = null;
+    } else {
+      const loserId = String(game.createdBy) === String(winnerId) ? game.acceptedBy : game.createdBy;
+      game.winner = winnerId;
+      game.loser = loserId;
 
-    game.winner = winnerId;
-    game.loser = loserId;
-    game.adminstatus = "decided";
-    game.status = "completed";
-    await game.save();
+      const user = await User.findById(winnerId).select("-token -password");
+      if (user) {
+        user.winningAmount = String((Number(user.winningAmount) || 0) + Number(game.winningAmount || 0));
+        await user.save();
 
-    const user = await User.findById(winnerId).select("-token -password");
-    if (user) {
-      const oldAmount = Number(user.winningAmount) || 0;
-      const addAmount = Number(game.winningAmount) || 0;
-      user.winningAmount = String(oldAmount + addAmount);
-      await user.save();
+        if (user.referredBy) {
+          const referrer = await User.findById(user.referredBy).select("-token -password");
+          if (referrer && referrer.isActive && !referrer.isBanned) {
+            const bet = Number(game.betAmount) || 0;
+            const referBonus = 0.02 * (2 * bet);
+            referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
+            await referrer.save();
 
-      if (user.referredBy) {
-        const referrer = await User.findById(user.referredBy).select("-token -password");
-        if (referrer && referrer.isActive && !referrer.isBanned) {
-          const bet = Number(game.betAmount) || 0;
-          const referBonus = 0.02 * (2 * bet); 
-          referrer.referralEarning = (Number(referrer.referralEarning || 0) + referBonus);
-          await referrer.save();
-
-          try {
-            await functions.recordReferralWin({
-              winnerId: user._id,
-              referredById: referrer._id,
-              gameId: game._id,
-              winningAmount: Number(game.winningAmount) || 0,
-              betAmount: Number(game.betAmount) || 0,  
-              roomId: game.roomId || null
-            });
-          } catch (recErr) {
-            console.error("Failed to record referral in decideGame:", recErr);
+            try {
+              await functions.recordReferralWin({
+                winnerId: user._id,
+                referredById: referrer._id,
+                gameId: game._id,
+                winningAmount: Number(game.winningAmount) || 0,
+                betAmount: Number(game.betAmount) || 0,
+                roomId: game.roomId || null
+              });
+            } catch (recErr) {
+              console.error("Failed to record referral in decideGame:", recErr);
+            }
           }
         }
       }
     }
+
+    game.adminstatus = "decided";
+    game.status = "completed";
+    await game.save();
 
     return {
       status: statusCode.SUCCESS,
