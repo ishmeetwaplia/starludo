@@ -1059,6 +1059,33 @@ exports.getFilteredGames = async (query) => {
         }
       },
       { $unwind: { path: "$acceptedBy", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$loser" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
+          as: "loser"
+        }
+      },
+      { $unwind: { path: "$loser", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$quitBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
+          as: "quitBy"
+        }
+      },
+      { $unwind: { path: "$quitBy", preserveNullAndEmptyArrays: true } },
+
       ...(search ? [{ $match: searchCondition }] : []),
       { $sort: { createdAt: -1 } },
       { $skip: skip },
@@ -1094,6 +1121,33 @@ exports.getFilteredGames = async (query) => {
         }
       },
       { $unwind: { path: "$acceptedBy", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$loser" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
+          as: "loser"
+        }
+      },
+      { $unwind: { path: "$loser", preserveNullAndEmptyArrays: true } },
+
+      {
+        $lookup: {
+          from: "users",
+          let: { userId: "$quitBy" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", "$$userId"] } } },
+            { $project: { _id: 1, username: 1 } }
+          ],
+          as: "quitBy"
+        }
+      },
+      { $unwind: { path: "$quitBy", preserveNullAndEmptyArrays: true } },
+
       ...(search ? [{ $match: searchCondition }] : []),
       { $count: "total" }
     ];
@@ -1150,7 +1204,7 @@ exports.decideGame = async (gameId, winnerId) => {
       };
     }
 
-    if (!winnerId || winnerId === null || winnerId==="") {
+    if (!winnerId || winnerId === "none" || winnerId==="") {
       
       const splitAmount = (Number(game.winningAmount || 0) / 2);
       const users = [game.createdBy, game.acceptedBy];

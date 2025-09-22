@@ -18,11 +18,17 @@ exports.createBet = async (req) => {
       };
     }
 
-    if ((user.credit + user.referralEarning) < betAmount) {
+    const availableBalance = 
+      Number(user.credit || 0) + 
+      Number(user.referralEarning || 0) + 
+      Number(user.winningAmount || 0) - 
+      Number(user.penalty || 0);
+
+    if (availableBalance < betAmount) {
       return {
-        status: statusCode.BAD_REQUEST,
+        status: statusCode.BAD_REQUEST, 
         success: false,
-        message: "Insufficient credit to place this bet"
+        message: "Insufficient balance to place this bet"
       };
     }
 
@@ -111,13 +117,22 @@ exports.submitWinning = async (req) => {
         .populate("acceptedBy", "username")
         .populate("winningScreenshots.user", "username");
 
-      // ✅ Transform game object for socket
+      const loserUsername = game.loser
+        ? (String(game.loser) === String(game.createdBy?._id) ? game.createdBy?.username : game.acceptedBy?.username) || null
+        : null;
+      const quitByUsername = game.quitBy
+        ? (String(game.quitBy) === String(game.createdBy?._id) ? game.createdBy?.username : game.acceptedBy?.username) || null
+        : null;
+
+      // ✅ Transform game object for socket (added loserUsername / quitByUsername)
       const socketGame = {
         ...game.toObject(),
         createdBy: game.createdBy?._id,
         acceptedBy: game.acceptedBy?._id,
         createdByUsername: game.createdBy?.username || null,
         acceptedByUsername: game.acceptedBy?.username || null,
+        loserUsername,
+        quitByUsername,
         winningScreenshots: game.winningScreenshots.map(ws => ({
           _id: ws._id,
           username: ws.user?.username || null,
@@ -157,12 +172,17 @@ exports.submitWinning = async (req) => {
         .populate("createdBy", "username")
         .populate("acceptedBy", "username");
 
+      const loserUsername = game.loser
+        ? (String(game.loser) === String(game.createdBy?._id) ? game.createdBy?.username : game.acceptedBy?.username) || null
+        : null;
+
       const socketGame = {
         ...game.toObject(),
         createdBy: game.createdBy?._id,
         acceptedBy: game.acceptedBy?._id,
         createdByUsername: game.createdBy?.username || null,
-        acceptedByUsername: game.acceptedBy?.username || null
+        acceptedByUsername: game.acceptedBy?.username || null,
+        loserUsername
       };
 
       return {
@@ -174,21 +194,25 @@ exports.submitWinning = async (req) => {
     }
 
     if (result === "cancel") {
-      
       game.status = "quit";
-      game.loser = _id;
+      game.quitBy = _id;
       await game.save();
 
       game = await Game.findById(gameId)
         .populate("createdBy", "username")
         .populate("acceptedBy", "username");
 
+      const quitByUsername = game.quitBy
+        ? (String(game.quitBy) === String(game.createdBy?._id) ? game.createdBy?.username : game.acceptedBy?.username) || null
+        : null;
+
       const socketGame = {
         ...game.toObject(),
         createdBy: game.createdBy?._id,
         acceptedBy: game.acceptedBy?._id,
         createdByUsername: game.createdBy?.username || null,
-        acceptedByUsername: game.acceptedBy?.username || null
+        acceptedByUsername: game.acceptedBy?.username || null,
+        quitByUsername
       };
 
       if (global.io) {

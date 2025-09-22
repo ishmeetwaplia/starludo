@@ -159,7 +159,14 @@ exports.getCredit = async (req) => {
         message: resMessage.User_not_found,
       };
     }
-    const amount = user.credit + user.referralEarning;
+
+    const credit = Number(user.credit || 0);
+    const referral = Number(user.referralEarning || 0);
+    const winning = Number(user.winningAmount || 0);
+    const penalty = Number(user.penalty || 0);
+
+    const amount = credit + referral + winning - penalty;
+
     return {
       status: statusCode.OK,
       success: true,

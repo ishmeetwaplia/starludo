@@ -110,12 +110,16 @@ function initSocket(server) {
         if (!game) return;
 
         const acceptingUser = await User.findById(userId);
-        if (!acceptingUser) {
-          return 
-        }
+        if (!acceptingUser) return;
 
-        if ((Number(acceptingUser.credit || 0) + Number(acceptingUser.referralEarning || 0)) < Number(game.betAmount || 0)) {
-          return; 
+        const availableBalance = 
+          Number(acceptingUser.credit || 0) +
+          Number(acceptingUser.referralEarning || 0) +
+          Number(acceptingUser.winningAmount || 0) -
+          Number(acceptingUser.penalty || 0);
+
+        if (Number(game.betAmount || 0) > availableBalance) {
+          return;
         }
 
         const updatedGame = await Game.findByIdAndUpdate(
@@ -173,12 +177,12 @@ function initSocket(server) {
     // Start game
     socket.on("start_game", async (startGamePayload) => {
       try {
-        const gameId =startGamePayload?._id;
+        const gameId = startGamePayload?._id;
         const incomingRoomId = startGamePayload?.roomId || null;
 
         const game = await Game.findById(gameId)
-          .populate("createdBy", "_id username credit")
-          .populate("acceptedBy", "_id username credit");
+          .populate("createdBy", "_id username credit referralEarning winningAmount penalty")
+          .populate("acceptedBy", "_id username credit referralEarning winningAmount penalty");
 
         if (!game || !game.acceptedBy) return;
 
@@ -194,7 +198,7 @@ function initSocket(server) {
                 message: "Invalid game: roomId already in use.",
               });
             });
-            return; 
+            return;
           }
         }
 
@@ -212,13 +216,61 @@ function initSocket(server) {
           });
         });
 
-        const betAmount = game.betAmount;
+        const betAmount = Number(game.betAmount || 0);
+
+        const deductAmountFromUser = async (userId, amountToDeduct) => {
+          const user = await User.findById(userId);
+          if (!user) throw new Error(`User ${userId} not found while starting game`);
+
+          let credit = Number(user.credit || 0);
+          let referral = Number(user.referralEarning || 0);
+          let winning = Number(user.winningAmount || 0);
+          let penalty = Number(user.penalty || 0);
+
+          let need = Number(amountToDeduct || 0);
+
+          const useCredit = Math.min(credit, need);
+          credit -= useCredit;
+          need -= useCredit;
+
+          if (need > 0) {
+            const useReferral = Math.min(referral, need);
+            referral -= useReferral;
+            need -= useReferral;
+          }
+
+          if (need > 0) {
+            const availableWinning = Math.max(0, winning - penalty);
+            const useWinning = Math.min(availableWinning, need);
+
+            winning = winning - useWinning;
+            need -= useWinning;
+          }
+
+          if (need > 0) {
+            return; 
+          }
+
+          const remainingTotal = Number(credit + referral + winning - penalty);
+          const finalWinning = remainingTotal > 0 ? remainingTotal : 0;
+
+          user.credit = 0;
+          user.referralEarning = 0;
+          user.winningAmount = String(finalWinning);
+
+          await user.save();
+        };
+
         await Promise.all([
-          User.findByIdAndUpdate(game.createdBy._id, { $inc: { credit: -betAmount } }),
-          User.findByIdAndUpdate(game.acceptedBy._id, { $inc: { credit: -betAmount } }),
+          deductAmountFromUser(game.createdBy._id, betAmount),
+          deductAmountFromUser(game.acceptedBy._id, betAmount),
         ]);
 
-        await Game.findByIdAndUpdate(gameId, { status: "started", roomId: incomingRoomId ? String(incomingRoomId) : null });
+        await Game.findByIdAndUpdate(
+          gameId,
+          { status: "started", roomId: incomingRoomId ? String(incomingRoomId) : null },
+          { new: true }
+        );
 
         await emitGamesList();
         await emitLiveGames();
@@ -307,7 +359,7 @@ function initSocket(server) {
           return socket.emit("error_message", { message: "Winner must be one of the players" });
         }
 
-        if (!winner || winner === null || winner==="") {
+        if (!winner || winner === "none" || winner==="") {
           
           // Reject case: split winningAmount
           const splitAmount = (Number(game.winningAmount || 0) / 2);
