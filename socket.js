@@ -381,7 +381,7 @@ function initSocket(server) {
           for (let u of users) {
             const user = await User.findById(u._id);
             if (user) {
-              user.winningAmount = String((Number(user.winningAmount) || 0) + splitAmount);
+              user.winningAmount = String((Number(user.credit) || 0) + splitAmount);
               await user.save();
             }
           }

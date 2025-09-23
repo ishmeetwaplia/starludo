@@ -1204,7 +1204,7 @@ exports.decideGame = async (gameId, winnerId) => {
       for (let u of users) {
         const user = await User.findById(u).select("-token -password");
         if (user) {
-          user.winningAmount = String((Number(user.winningAmount) || 0) + splitAmount);
+          user.credit = String((Number(user.credit) || 0) + splitAmount);
           await user.save();
         }
       }
