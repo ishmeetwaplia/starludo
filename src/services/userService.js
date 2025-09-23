@@ -171,7 +171,10 @@ exports.getCredit = async (req) => {
       status: statusCode.OK,
       success: true,
       message: "Credit fetched successfully",
-      data: { credit: amount || 0 },
+      data: { 
+        credit: amount || 0,    
+        originalCredit: credit   
+      },
     };
   } catch (error) {
     return {
