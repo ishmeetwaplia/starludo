@@ -222,42 +222,55 @@ function initSocket(server) {
           const user = await User.findById(userId);
           if (!user) throw new Error(`User ${userId} not found while starting game`);
 
-          let credit = Number(user.credit || 0);
-          let referral = Number(user.referralEarning || 0);
-          let winning = Number(user.winningAmount || 0);
-          let penalty = Number(user.penalty || 0);
+          // Normalize values (schema uses mixed types)
+          let credit = Number(user.credit || 0); // number
+          let referral = Number(user.referralEarning || 0); // number
+          let winning = Number(user.winningAmount || 0); // stored as string in schema, convert
+          const bet = Number(amountToDeduct || 0);
 
-          let need = Number(amountToDeduct || 0);
-
-          const useCredit = Math.min(credit, need);
-          credit -= useCredit;
-          need -= useCredit;
-
-          if (need > 0) {
-            const useReferral = Math.min(referral, need);
-            referral -= useReferral;
-            need -= useReferral;
+          // Case 1: credit covers full bet
+          if (credit >= bet) {
+            credit = credit - bet;
+            // Save back
+            user.credit = credit;
+            // referral and winning unchanged
+            await user.save();
+            return;
           }
 
-          if (need > 0) {
-            const availableWinning = Math.max(0, winning - penalty);
-            const useWinning = Math.min(availableWinning, need);
-
-            winning = winning - useWinning;
-            need -= useWinning;
+          // Case 2: credit + referral covers full bet
+          const creditPlusReferral = credit + referral;
+          if (creditPlusReferral >= bet) {
+            // use all credit, reduce referral by remaining
+            const remainingAfterCredit = bet - credit; // > 0
+            credit = 0;
+            referral = referral - remainingAfterCredit;
+            // Save back
+            user.credit = credit;
+            user.referralEarning = referral;
+            await user.save();
+            return;
           }
 
-          if (need > 0) {
-            return; 
+          // Case 3: need to use winning amount as well
+          const totalAvailable = credit + referral + winning;
+          if (totalAvailable < bet) {
+            // Not enough funds in all pools — throw so caller can handle (or change to your desired behavior)
+            throw new Error(`Insufficient funds for user ${userId}: available ${totalAvailable}, required ${bet}`);
           }
 
-          const remainingTotal = Number(credit + referral + winning - penalty);
-          const finalWinning = remainingTotal > 0 ? remainingTotal : 0;
+          // Use up credit and referral fully, then deduct remaining from winning
+          const needAfterCreditReferral = bet - (credit + referral); // > 0
+          credit = 0;
+          referral = 0;
+          winning = winning - needAfterCreditReferral; // remaining winning
 
-          user.credit = 0;
-          user.referralEarning = 0;
-          user.winningAmount = String(finalWinning);
+          // Ensure not negative (shouldn't be because of earlier check)
+          if (winning < 0) winning = 0;
 
+          user.credit = credit; // number
+          user.referralEarning = referral; // number
+          user.winningAmount = String(winning); // schema stores as string
           await user.save();
         };
 
