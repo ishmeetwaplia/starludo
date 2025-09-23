@@ -467,10 +467,11 @@ exports.getAllGames = async (query) => {
       if (winningAmountMax) filter.winningAmount.$lte = Number(winningAmountMax);
     }
 
-    // fetch without skip/limit first
+    // fetch without skip/limit first, sorted by latest
     let games = await Game.find(filter)
       .populate("createdBy", "_id username")
-      .populate("acceptedBy", "_id username");
+      .populate("acceptedBy", "_id username")
+      .sort({ createdAt: -1 }); 
 
     // Apply search filter if provided
     if (search) {
@@ -1196,17 +1197,9 @@ exports.decideGame = async (gameId, winnerId) => {
       };
     }
 
-    if (winnerId && String(game.createdBy) !== String(winnerId) && String(game.acceptedBy) !== String(winnerId)) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: "Winner must be one of the players in this game"
-      };
-    }
-
     if (!winnerId || winnerId === "none" || winnerId==="") {
       
-      const splitAmount = (Number(game.winningAmount || 0) / 2);
+      const splitAmount = Number(game.betAmount || 0);
       const users = [game.createdBy, game.acceptedBy];
       for (let u of users) {
         const user = await User.findById(u).select("-token -password");
@@ -1218,6 +1211,13 @@ exports.decideGame = async (gameId, winnerId) => {
       game.winner = null;
       game.loser = null;
     } else {
+      if (winnerId && String(game.createdBy) !== String(winnerId) && String(game.acceptedBy) !== String(winnerId)) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "Winner must be one of the players in this game"
+        };
+      }
       const loserId = String(game.createdBy) === String(winnerId) ? game.acceptedBy : game.createdBy;
       game.winner = winnerId;
       game.loser = loserId;

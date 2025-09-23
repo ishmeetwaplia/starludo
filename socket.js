@@ -368,14 +368,15 @@ function initSocket(server) {
         if (!game) return socket.emit("error_message", { message: "Game not found" });
         if (game.adminstatus === "decided") return socket.emit("error_message", { message: "Game already decided" });
 
-        if (winner && ![game.createdBy._id.toString(), game.acceptedBy._id.toString()].includes(winner)) {
-          return socket.emit("error_message", { message: "Winner must be one of the players" });
-        }
+        // if (winner && ![game.createdBy._id.toString(), game.acceptedBy._id.toString()].includes(winner)) {
+        //   console.log("Winner not one of the players:", winner);
+        //   return socket.emit("error_message", { message: "Winner must be one of the players" });
+        // }
 
         if (!winner || winner === "none" || winner==="") {
           
           // Reject case: split winningAmount
-          const splitAmount = (Number(game.winningAmount || 0) / 2);
+          const splitAmount = Number(game.betAmount || 0);
           const users = [game.createdBy, game.acceptedBy];
           for (let u of users) {
             const user = await User.findById(u._id);
