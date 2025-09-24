@@ -268,10 +268,21 @@ exports.getUserGameHistory = async (req) => {
 
     history = history.map((game) => {
       const gameObj = game.toObject();
-      if (!game.winner) {
-        gameObj.decision = null;
-      } else {
-        gameObj.decision = game.winner.toString() === _id.toString() ? "win" : "lost";
+
+      if (game.adminstatus === "notDecided") {
+        gameObj.decision = "notDecided";
+
+      } else if (game.winner) {
+        const winnerId = game.winner?.toString();
+        const loserId = game.loser?.toString?.();
+
+        if (winnerId === _id.toString()) {
+          gameObj.decision = "win";
+        } else if (!winnerId) {
+          gameObj.decision = "quit";
+        } else {
+          gameObj.decision = "lost";
+        }
       }
       return gameObj;
     });

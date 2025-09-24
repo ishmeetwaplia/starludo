@@ -111,6 +111,7 @@ exports.addCredit = async (req) => {
   try {
     const { _id } = req.auth;
     const { amount } = req.body;
+    amount = parseFloat(Number(amount).toFixed(2));
 
     if (!amount || amount < 10 || amount > 25000) {
       return {
@@ -172,8 +173,8 @@ exports.getCredit = async (req) => {
       success: true,
       message: "Credit fetched successfully",
       data: { 
-        credit: amount || 0,    
-        originalCredit: credit   
+        credit: parseFloat(amount.toFixed(2)) || 0,    
+        originalCredit: parseFloat(credit.toFixed(2))
       },
     };
   } catch (error) {
