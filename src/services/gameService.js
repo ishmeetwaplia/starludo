@@ -271,17 +271,16 @@ exports.getUserGameHistory = async (req) => {
       const gameObj = game.toObject();
 
       if (game.adminstatus === "notDecided") {
-        gameObj.decision = "notDecided";
+        gameObj.decision = "not Decided";
 
-      } else if (game.winner) {
+      } else {
         const winnerId = game.winner?.toString();
-        const loserId = game.loser?.toString?.();
 
-        if (winnerId === _id.toString()) {
-          gameObj.decision = "win";
-        } else if (!winnerId) {
+        if (!winnerId || winnerId === null) {
           gameObj.decision = "quit";
-        } else {
+        } else if (winnerId === _id.toString()) {
+          gameObj.decision = "win";
+        } else  {
           gameObj.decision = "lost";
         }
       }
