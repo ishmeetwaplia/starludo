@@ -6,7 +6,7 @@ const path = require("path");
 exports.createBet = async (req) => {
   try {
     const { _id } = req.auth;
-    const { betAmount } = req.body;
+    let { betAmount } = req.body;
     betAmount = Number(parseFloat(betAmount).toFixed(2));
 
     const user = await User.findById(_id);
