@@ -110,7 +110,7 @@ exports.updateProfile = async (req) => {
 exports.addCredit = async (req) => {
   try {
     const { _id } = req.auth;
-    const { amount } = req.body;
+    let { amount } = req.body;
     amount = parseFloat(Number(amount).toFixed(2));
 
     if (!amount || amount < 10 || amount > 25000) {
