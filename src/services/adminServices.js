@@ -942,6 +942,19 @@ exports.getAllWithdraws = async (query) => {
       );
     }
 
+    withdraws = withdraws.map(w => ({
+      _id: w._id,
+      amount: w.amount,
+      userAmount: w.userAmount,
+      status: w.status,
+      upiId: w.upiId,
+      bankAccount: w.bankAccount || null,
+      ifsc: w.ifsc || null,
+      userId: w.userId,
+      createdAt: w.createdAt,
+      updatedAt: w.updatedAt
+    }));
+
     const total = withdraws.length;
     const skip = (page - 1) * limit;
     withdraws = withdraws.slice(skip, skip + Number(limit));
